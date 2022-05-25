@@ -11,6 +11,7 @@ class ResourceModel(Model):
         self.num_resources = num_resources
         self.num_gathering_points = num_gathering_points
         self.running = True
+        self.agents = list()
         self.setup()
 
     def setup(self):
@@ -21,19 +22,28 @@ class ResourceModel(Model):
     def fill_env(self, agent_cl, n):
         for i in range(n):
             agent = agent_cl(i, self)
+            self.agents.append(agent)
             x = self.random.randrange(self.grid.width)
             y = self.random.randrange(self.grid.height)
+            while(not self.grid.is_cell_empty((x,y))):
+                x = self.random.randrange(self.grid.width)
+                y = self.random.randrange(self.grid.height)
             self.grid.place_agent(agent, (x, y))
+
+    def step(self) -> None:
+        for agent in self.agents:
+            agent.step()
 
 
 class Collector(Agent):
-    def __init__(self, unique_id, model, proximity_distance=1):
+    def __init__(self, unique_id, model, proximity_distance=2):
         super(Collector, self).__init__(unique_id, model)
         self.proximity_distance = proximity_distance
-        prox_shape = (self.proximity_distance * 2 + 1, self.proximity_distance * 2 + 1)
-        self.proximity = np.zeros(prox_shape)
+        self.prox_shape = (self.proximity_distance * 2 + 1, self.proximity_distance * 2 + 1)
+        self.proximity = np.zeros(self.prox_shape)
 
-    def get_proximity_information(self):
+    def update_proximity_information(self):
+        # reset, 1 means that you can move freely there
         self.proximity.fill(1)
         neighbours = self.model.grid.get_neighbors(
             self.pos, moore=True, include_center=False, radius=self.proximity_distance)
@@ -44,13 +54,25 @@ class Collector(Agent):
         for agent in neighbours:
             x = (agent.pos[0] - self.pos[0]) + center
             y = (agent.pos[1] - self.pos[1]) + center
+            # the grid might be toroidal, so we have to wrap up if agents are on the edges
+            x = x % self.prox_shape[0]
+            y = y % self.prox_shape[1]
+
             if type(agent) is Collector:
-                self.proximity[x, y] = 0
+                self.proximity[y, x] = 0
             if type(agent) is Resource:
-                self.proximity[x, y] = 0.5
+                self.proximity[y, x] = 0.5
             if type(agent) is GatheringPoint:
-                self.proximity[x, y] = 0.5
-        
+                self.proximity[y, x] = 0.5
+
+        # the browser grid cells are indexed by [x][y]
+        # where [0][0] is assumed to be the bottom-left and [width-1][height-1] is the top-right
+        # so it's the opposite representation of numpy
+        self.proximity = np.flip(self.proximity, 0)
+
+    def step(self) -> None:
+        self.update_proximity_information()
+
 
     def portrayal(self):
         shape = {
