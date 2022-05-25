@@ -6,13 +6,16 @@ def agent_portrayal(agent):
     return agent.portrayal()
 
 
-def instantiate_server(grid, model):
-    environment = grid
+def instantiate_server(model):
+    width = 10
+    height = 10
     pixels = 500
-    environment_canvas = CanvasGrid(agent_portrayal, environment.width, environment.height, pixels, pixels)
+    environment_canvas = CanvasGrid(agent_portrayal, width, height, pixels, pixels)
     server = ModularServer(model,
                            [environment_canvas],
                            "Resource Model",
-                           {"environment": grid, "num_collectors": 0, "num_resources": 20})
+                           {"width": width, "height": height, "num_collectors": 3, "num_resources": 2})
     server.port = 8521  # The default
+    print("before launch")
     server.launch()
+    print("after launch")

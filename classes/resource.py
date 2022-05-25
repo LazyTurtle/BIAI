@@ -1,10 +1,12 @@
 from mesa import Model, Agent
+from mesa.space import MultiGrid
 
 
 class ResourceModel(Model):
 
-    def __init__(self, environment, num_collectors, num_resources):
-        self.grid = environment
+    def __init__(self, width, height, num_collectors, num_resources):
+        print("init")
+        self.grid = MultiGrid(width, height, True)
         self.num_collectors = num_collectors
         self.num_resources = num_resources
         self.running = True
@@ -40,7 +42,7 @@ class Resource(Agent):
         super(Resource, self).__init__(unique_id, model)
 
     def portrayal(self):
-        shape = {"Shape": "square",
+        shape = {"Shape": "circle",
                      "Color": "green",
                      "Filled": "true",
                      "Layer": 0,
