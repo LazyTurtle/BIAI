@@ -122,3 +122,14 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Latex logs and auxiliary files
+report-latex/*.log
+report-latex/*.aux
+report-latex/*.bbl
+report-latex/*.blg
+report-latex/*.fdb_latexmk
+report-latex/*.fls
+report-latex/report.synctex.gz
+
+
