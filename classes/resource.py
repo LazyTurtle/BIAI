@@ -1,3 +1,6 @@
+import cmath
+import math
+
 from mesa import Model, Agent
 from mesa.space import SingleGrid
 import numpy as np
@@ -36,11 +39,13 @@ class ResourceModel(Model):
 
 
 class Collector(Agent):
-    def __init__(self, unique_id, model, proximity_distance=2):
+    def __init__(self, unique_id, model, proximity_distance=1, vision_distance = 2):
         super(Collector, self).__init__(unique_id, model)
         self.proximity_distance = proximity_distance
         self.prox_shape = (self.proximity_distance * 2 + 1, self.proximity_distance * 2 + 1)
         self.proximity = np.zeros(self.prox_shape)
+        self.vision_distance = vision_distance
+        self.vision = np.zeros((3,3))
 
     def update_proximity_information(self):
         # reset, 1 means that you can move freely there
@@ -48,30 +53,61 @@ class Collector(Agent):
         neighbours = self.model.grid.get_neighbors(
             self.pos, moore=True, include_center=False, radius=self.proximity_distance)
 
-        center = int((self.proximity_distance * 2 + 1) / 2)
-        self.proximity[center, center] = 0
-
+        self.proximity[self.proximity_distance, self.proximity_distance] = 0
         for agent in neighbours:
-            x = (agent.pos[0] - self.pos[0]) + center
-            y = (agent.pos[1] - self.pos[1]) + center
-            # the grid might be toroidal, so we have to wrap up if agents are on the edges
-            x = x % self.prox_shape[0]
-            y = y % self.prox_shape[1]
+            j, i = self.relative_neighbour_coordinates(agent, self.proximity_distance)
 
             if type(agent) is Collector:
-                self.proximity[y, x] = 0
+                self.proximity[i, j] = 0
             if type(agent) is Resource:
-                self.proximity[y, x] = 0.5
+                self.proximity[i, j] = 0.5
             if type(agent) is GatheringPoint:
-                self.proximity[y, x] = 0.5
+                self.proximity[i, j] = 0.5
 
         # the browser grid cells are indexed by [x][y]
         # where [0][0] is assumed to be the bottom-left and [width-1][height-1] is the top-right
-        # so it's the opposite representation of numpy
+        # it's the opposite vertical representation of numpy
         self.proximity = np.flip(self.proximity, 0)
+
+    def update_vision_information(self):
+        self.vision.fill(0)
+        neighbours = self.model.grid.get_neighbors(
+            self.pos, moore=True, include_center=False, radius=self.vision_distance)
+        for agent in neighbours:
+            if type(agent) is not Resource:
+                continue
+            # TODO: handle toroidal cases
+            x_dis = (agent.pos[0] - self.pos[0])
+            y_dis = (agent.pos[1] - self.pos[1])
+            distance = math.sqrt(x_dis**2 + y_dis**2)
+            max_env_distance = max(self.model.grid.width, self.model.grid.height)
+            food_distance = 1 - (distance/max_env_distance)
+            bearings = math.atan2(y_dis, x_dis)
+            mx = math.cos(bearings)
+            my = math.sin(bearings)
+            rx = round(mx)
+            ry = round(my)
+            i = ry + int(self.vision.shape[0]/2)
+            j = rx + int(self.vision.shape[0]/2)
+            self.vision[i,j] += food_distance
+        self.vision = np.flip(self.vision,0)
+        self.vision.clip(0,1)
+
+    def relative_neighbour_coordinates(self, neighbour, radius):
+        x = (neighbour.pos[0] - self.pos[0]) + radius
+        y = (neighbour.pos[1] - self.pos[1]) + radius
+        # the grid might be toroidal, so we have to wrap up if agents are on the edges
+        dx = x % self.prox_shape[0]
+        dy = y % self.prox_shape[1]
+        return dx, dy
+
 
     def step(self) -> None:
         self.update_proximity_information()
+        self.update_vision_information()
+
+        print(self.proximity)
+        print(self.vision)
 
 
     def portrayal(self):
