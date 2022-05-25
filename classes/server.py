@@ -16,6 +16,4 @@ def instantiate_server(model):
                            "Resource Model",
                            {"width": width, "height": height, "num_collectors": 3, "num_resources": 2})
     server.port = 8521  # The default
-    print("before launch")
     server.launch()
-    print("after launch")
