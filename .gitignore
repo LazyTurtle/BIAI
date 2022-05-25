@@ -122,3 +122,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Latex logs and auxiliary files
+report-latex/*.log
+report-latex/*.aux
