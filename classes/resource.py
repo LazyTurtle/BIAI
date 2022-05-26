@@ -1,4 +1,3 @@
-import cmath
 import math
 
 from mesa import Model, Agent
@@ -9,6 +8,7 @@ import numpy as np
 class ResourceModel(Model):
 
     def __init__(self, width, height, num_collectors, num_resources, num_gathering_points=1):
+        super().__init__()
         self.grid = SingleGrid(width, height, True)
         self.num_collectors = num_collectors
         self.num_resources = num_resources
@@ -28,7 +28,7 @@ class ResourceModel(Model):
             self.agents.append(agent)
             x = self.random.randrange(self.grid.width)
             y = self.random.randrange(self.grid.height)
-            while(not self.grid.is_cell_empty((x,y))):
+            while not self.grid.is_cell_empty((x, y)):
                 x = self.random.randrange(self.grid.width)
                 y = self.random.randrange(self.grid.height)
             self.grid.place_agent(agent, (x, y))
@@ -38,27 +38,26 @@ class ResourceModel(Model):
             agent.step()
 
     # takes into account the toroidal space
-    def relative_distances(self,agentA, agentB):
-        xdiff = agentB.pos[0] - agentA.pos[0]
+    def relative_distances(self, agent_a, agent_b):
+        xdiff = agent_b.pos[0] - agent_a.pos[0]
         if xdiff > (self.grid.width / 2):
             xdiff = - self.grid.width + xdiff
         if xdiff < -(self.grid.width / 2):
             xdiff = self.grid.width + xdiff
 
-        ydiff = agentB.pos[1] - agentA.pos[1]
+        ydiff = agent_b.pos[1] - agent_a.pos[1]
         if ydiff > (self.grid.height / 2):
             ydiff = - self.grid.height + ydiff
         if ydiff < -(self.grid.height / 2):
             ydiff = self.grid.height + ydiff
 
-        distance = math.sqrt(xdiff**2+ydiff**2)
+        distance = math.sqrt(xdiff ** 2 + ydiff ** 2)
 
         return xdiff, ydiff, distance
 
 
-
 class Collector(Agent):
-    def __init__(self, unique_id, model, proximity_distance=1, vision_distance = 2):
+    def __init__(self, unique_id, model, proximity_distance=1, vision_distance=3):
         super(Collector, self).__init__(unique_id, model)
         self.proximity_distance = proximity_distance
         self.prox_shape = (self.proximity_distance * 2 + 1, self.proximity_distance * 2 + 1)
@@ -96,23 +95,22 @@ class Collector(Agent):
             if type(agent) is not Resource:
                 continue
 
-            x,y,distance = self.model.relative_distances(self,agent)
-
+            x, y, distance = self.model.relative_distances(self, agent)
             max_env_distance = max(self.model.grid.width, self.model.grid.height)
-            food_distance = 1 - (distance/max_env_distance)
+            food_distance = 1 - (distance / max_env_distance)
             bearings = math.atan2(y, x)
             mx = math.cos(bearings)
             my = math.sin(bearings)
             rx = round(mx)
             ry = round(my)
-            i = ry + int(self.vision.shape[0]/2)
-            j = rx + int(self.vision.shape[0]/2)
-            self.vision[i,j] += food_distance
-        self.vision = np.flip(self.vision,0)
-        self.vision.clip(0,1)
+            i = ry + int(self.vision.shape[0] / 2)
+            j = rx + int(self.vision.shape[0] / 2)
+            self.vision[i, j] += food_distance
+        self.vision = np.flip(self.vision, 0)
+        self.vision.clip(0, 1)
 
     def array_indexes(self, neighbour, radius):
-        dx,dy,_ = self.model.relative_distances(self,neighbour)
+        dx, dy, _ = self.model.relative_distances(self, neighbour)
         x = dx + radius
         y = dy + radius
         return x, y
@@ -124,10 +122,10 @@ class Collector(Agent):
         print(self.proximity)
         print(self.vision)
 
-
     def portrayal(self):
         shape = {
-            "text": f"id:{self.unique_id}, position:{self.pos}",
+            "text": f"id:{self.unique_id}",
+            "text_color": "black",
             "Shape": "circle",
             "Color": "red",
             "Filled": "true",
