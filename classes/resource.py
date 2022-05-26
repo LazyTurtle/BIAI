@@ -1,8 +1,8 @@
 import math
-
+import numpy as np
 from mesa import Model, Agent
 from mesa.space import SingleGrid
-import numpy as np
+from mesa.time import BaseScheduler
 
 
 class ResourceModel(Model):
@@ -14,7 +14,8 @@ class ResourceModel(Model):
         self.num_resources = num_resources
         self.num_gathering_points = num_gathering_points
         self.running = True
-        self.agents = list()
+        self.schedule = BaseScheduler(self)
+        self.n_agents = 0
         self.setup()
 
     def setup(self):
@@ -24,8 +25,9 @@ class ResourceModel(Model):
 
     def fill_env(self, agent_cl, n):
         for i in range(n):
-            agent = agent_cl(i, self)
-            self.agents.append(agent)
+            agent = agent_cl(self.n_agents, self)
+            self.n_agents += 1
+            self.schedule.add(agent)
             x = self.random.randrange(self.grid.width)
             y = self.random.randrange(self.grid.height)
             while not self.grid.is_cell_empty((x, y)):
@@ -34,8 +36,7 @@ class ResourceModel(Model):
             self.grid.place_agent(agent, (x, y))
 
     def step(self) -> None:
-        for agent in self.agents:
-            agent.step()
+        self.schedule.step()
 
     # takes into account the toroidal space
     def relative_distances(self, agent_a, agent_b):
@@ -140,12 +141,17 @@ class Resource(Agent):
 
     def portrayal(self):
         shape = {
+            "text": f"id:{self.unique_id}",
+            "text_color": "black",
             "Shape": "circle",
             "Color": "green",
             "Filled": "true",
             "Layer": 0,
             "r": 0.5}
         return shape
+
+    def step(self) -> None:
+        pass
 
 
 class GatheringPoint(Agent):
@@ -154,6 +160,8 @@ class GatheringPoint(Agent):
 
     def portrayal(self):
         shape = {
+            "text": f"id:{self.unique_id}",
+            "text_color": "white",
             "Shape": "rect",
             "Color": "black",
             "Filled": "true",
@@ -162,3 +170,6 @@ class GatheringPoint(Agent):
             "h": 1
         }
         return shape
+
+    def step(self) -> None:
+        pass
