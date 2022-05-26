@@ -132,4 +132,5 @@ report-latex/*.fdb_latexmk
 report-latex/*.fls
 report-latex/report.synctex.gz
 
-
+# pureples folder
+pureples

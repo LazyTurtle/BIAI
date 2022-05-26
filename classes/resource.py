@@ -64,7 +64,7 @@ class Collector(Agent):
         self.prox_shape = (self.proximity_distance * 2 + 1, self.proximity_distance * 2 + 1)
         self.proximity = np.zeros(self.prox_shape)
         self.vision_distance = vision_distance
-        self.vision = np.zeros((3,3))
+        self.vision = np.zeros((3, 3))
 
     def update_proximity_information(self):
         # reset, 1 means that you can move freely there
