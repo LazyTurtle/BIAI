@@ -37,6 +37,25 @@ class ResourceModel(Model):
         for agent in self.agents:
             agent.step()
 
+    # takes into account the toroidal space
+    def relative_distances(self,agentA, agentB):
+        xdiff = agentB.pos[0] - agentA.pos[0]
+        if xdiff > (self.grid.width / 2):
+            xdiff = - self.grid.width + xdiff
+        if xdiff < -(self.grid.width / 2):
+            xdiff = self.grid.width + xdiff
+
+        ydiff = agentB.pos[1] - agentA.pos[1]
+        if ydiff > (self.grid.height / 2):
+            ydiff = - self.grid.height + ydiff
+        if ydiff < -(self.grid.height / 2):
+            ydiff = self.grid.height + ydiff
+
+        distance = math.sqrt(xdiff**2+ydiff**2)
+
+        return xdiff, ydiff, distance
+
+
 
 class Collector(Agent):
     def __init__(self, unique_id, model, proximity_distance=1, vision_distance = 2):
@@ -55,7 +74,7 @@ class Collector(Agent):
 
         self.proximity[self.proximity_distance, self.proximity_distance] = 0
         for agent in neighbours:
-            j, i = self.relative_neighbour_coordinates(agent, self.proximity_distance)
+            j, i = self.array_indexes(agent, self.proximity_distance)
 
             if type(agent) is Collector:
                 self.proximity[i, j] = 0
@@ -76,13 +95,12 @@ class Collector(Agent):
         for agent in neighbours:
             if type(agent) is not Resource:
                 continue
-            # TODO: handle toroidal cases
-            x_dis = (agent.pos[0] - self.pos[0])
-            y_dis = (agent.pos[1] - self.pos[1])
-            distance = math.sqrt(x_dis**2 + y_dis**2)
+
+            x,y,distance = self.model.relative_distances(self,agent)
+
             max_env_distance = max(self.model.grid.width, self.model.grid.height)
             food_distance = 1 - (distance/max_env_distance)
-            bearings = math.atan2(y_dis, x_dis)
+            bearings = math.atan2(y, x)
             mx = math.cos(bearings)
             my = math.sin(bearings)
             rx = round(mx)
@@ -93,14 +111,11 @@ class Collector(Agent):
         self.vision = np.flip(self.vision,0)
         self.vision.clip(0,1)
 
-    def relative_neighbour_coordinates(self, neighbour, radius):
-        x = (neighbour.pos[0] - self.pos[0]) + radius
-        y = (neighbour.pos[1] - self.pos[1]) + radius
-        # the grid might be toroidal, so we have to wrap up if agents are on the edges
-        dx = x % self.prox_shape[0]
-        dy = y % self.prox_shape[1]
-        return dx, dy
-
+    def array_indexes(self, neighbour, radius):
+        dx,dy,_ = self.model.relative_distances(self,neighbour)
+        x = dx + radius
+        y = dy + radius
+        return x, y
 
     def step(self) -> None:
         self.update_proximity_information()
@@ -112,6 +127,7 @@ class Collector(Agent):
 
     def portrayal(self):
         shape = {
+            "text": f"id:{self.unique_id}, position:{self.pos}",
             "Shape": "circle",
             "Color": "red",
             "Filled": "true",
