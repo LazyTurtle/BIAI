@@ -65,6 +65,8 @@ class Collector(Agent):
         self.proximity = np.zeros(self.prox_shape)
         self.vision_distance = vision_distance
         self.vision = np.zeros((3, 3))
+        self.resources = np.zeros((3,3))
+        self.current_resources = 3
 
     def update_proximity_information(self):
         # reset, 1 means that you can move freely there
@@ -110,6 +112,20 @@ class Collector(Agent):
         self.vision = np.flip(self.vision, 0)
         self.vision.clip(0, 1)
 
+    def update_resource_sensor(self):
+        self.resources.fill(0)
+        neighbors = self.model.grid.get_neighbors(self.pos,moore=True,include_center=True, radius=1)
+        for agent in neighbors:
+            if hasattr(agent, 'n_resources'):
+                n_resources = agent.n_resources
+                j, i = self.array_indexes(agent, 1)
+                self.resources[i,j]=n_resources
+        self.proximity = np.flip(self.proximity, 0)
+
+    @property
+    def n_resources(self):
+        return self.current_resources
+
     def array_indexes(self, neighbour, radius):
         dx, dy, _ = self.model.relative_distances(self, neighbour)
         x = dx + radius
@@ -119,9 +135,8 @@ class Collector(Agent):
     def step(self) -> None:
         self.update_proximity_information()
         self.update_vision_information()
-
-        print(self.proximity)
-        print(self.vision)
+        self.update_resource_sensor()
+        self.log()
 
     def portrayal(self):
         shape = {
@@ -133,6 +148,12 @@ class Collector(Agent):
             "Layer": 0,
             "r": 0.5}
         return shape
+
+    def log(self):
+        print(f"id:{self.unique_id}")
+        print(self.proximity)
+        print(self.vision)
+        print(self.resources)
 
 
 class Resource(Agent):
@@ -149,6 +170,10 @@ class Resource(Agent):
             "Layer": 0,
             "r": 0.5}
         return shape
+
+    @property
+    def n_resources(self):
+        return 1
 
     def step(self) -> None:
         pass

@@ -14,6 +14,6 @@ def instantiate_server(model):
     server = ModularServer(model,
                            [environment_canvas],
                            "Resource Model",
-                           {"width": width, "height": height, "num_collectors": 1, "num_resources": 5})
+                           {"width": width, "height": height, "num_collectors": 2, "num_resources": 5})
     server.port = 8521  # The default
     server.launch()
