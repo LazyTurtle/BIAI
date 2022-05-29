@@ -65,7 +65,7 @@ class Collector(Agent):
         self.proximity = np.zeros(self.prox_shape)
         self.vision_distance = vision_distance
         self.vision = np.zeros((3, 3))
-        self.resources = np.zeros((3,3))
+        self.resources = np.zeros((3, 3))
         self.current_resources = 3
 
     def update_proximity_information(self):
@@ -110,17 +110,17 @@ class Collector(Agent):
             j = rx + int(self.vision.shape[0] / 2)
             self.vision[i, j] += food_distance
         self.vision = np.flip(self.vision, 0)
-        self.vision.clip(0, 1)
+        self.vision = self.vision.clip(0, 1)
 
     def update_resource_sensor(self):
         self.resources.fill(0)
-        neighbors = self.model.grid.get_neighbors(self.pos,moore=True,include_center=True, radius=1)
+        neighbors = self.model.grid.get_neighbors(self.pos, moore=True, include_center=True, radius=1)
         for agent in neighbors:
             if hasattr(agent, 'n_resources'):
                 n_resources = agent.n_resources
                 j, i = self.array_indexes(agent, 1)
-                self.resources[i,j]=n_resources
-        self.proximity = np.flip(self.proximity, 0)
+                self.resources[i, j] = n_resources
+        self.resources = np.flip(self.resources, 0)
 
     @property
     def n_resources(self):
