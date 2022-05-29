@@ -9,16 +9,21 @@ class ResourceModel(Model):
 
     def __init__(self, width, height, num_collectors, num_resources, num_gathering_points=1):
         super().__init__()
-        self.grid = SingleGrid(width, height, True)
+        self.grid = None
+        self.width = width
+        self.height = height
         self.num_collectors = num_collectors
         self.num_resources = num_resources
         self.num_gathering_points = num_gathering_points
         self.running = True
-        self.schedule = BaseScheduler(self)
+        self.schedule = None
         self.n_agents = 0
-        self.setup()
+        self.reset()
 
-    def setup(self):
+    def reset(self):
+        self.grid = SingleGrid(self.width, self.height, True)
+        self.n_agents = 0
+        self.schedule = BaseScheduler(self)
         self.fill_env(Resource, self.num_resources)
         self.fill_env(Collector, self.num_collectors)
         self.fill_env(GatheringPoint, self.num_gathering_points)
@@ -58,6 +63,7 @@ class ResourceModel(Model):
 
 
 class Collector(Agent):
+
     def __init__(self, unique_id, model, proximity_distance=1, vision_distance=3):
         super(Collector, self).__init__(unique_id, model)
         self.proximity_distance = proximity_distance
@@ -66,7 +72,10 @@ class Collector(Agent):
         self.vision_distance = vision_distance
         self.vision = np.zeros((3, 3))
         self.resources = np.zeros((3, 3))
-        self.current_resources = 3
+
+        # data used during each iteration
+        self.current_resources = 0
+        self.points = 0
 
     def update_proximity_information(self):
         # reset, 1 means that you can move freely there
@@ -121,6 +130,39 @@ class Collector(Agent):
                 j, i = self.array_indexes(agent, 1)
                 self.resources[i, j] = n_resources
         self.resources = np.flip(self.resources, 0)
+
+    @staticmethod
+    def input_coordinates():
+        proximity_inputs = \
+            [(-1., 1., -1.), (0., 1., -1.), (1., 1., -1.),
+             (-1., 0., -1.), (0., 0., -1.), (1., 0., -1.),
+             (-1., -1., -1.), (0., -1., -1.), (1., -1., -1.)]
+        vision_inputs = \
+            [(-1., 1., -0.5), (0., 1., -0.5), (1., 1., -0.5),
+             (-1., 0., -0.5), (0., 0., -0.5), (1., 0., -0.5),
+             (-1., -1., -0.5), (0., -1., -0.5), (1., -1., -0.5)]
+        resources_inputs = \
+            [(-1., 1., 0.), (0., 1., 0.), (1., 1., 0.),
+             (-1., 0., 0.), (0., 0., 0.), (1., 0., 0.),
+             (-1., -1., 0.), (0., -1., 0.), (1., -1., 0.)]
+        inputs = proximity_inputs + vision_inputs + resources_inputs
+        hidden_layers = \
+            [
+                [(-1., 1., 0.25), (0., 1., 0.25), (1., 1., 0.25),
+                 (-1., 0., 0.25), (0., 0., 0.25), (1., 0., 0.25),
+                 (-1., -1., 0.25), (0., -1., 0.25), (1., -1., 0.25),
+                 (-1., 1., 0.5), (0., 1., 0.5), (1., 1., 0.5),
+                 (-1., 0., 0.5), (0., 0., 0.5), (1., 0., 0.5),
+                 (-1., -1., 0.5), (0., -1., 0.5), (1., -1., 0.5)]
+            ]
+        outputs = \
+            [(-1., 1., 1.), (0., 1., 1.), (1., 1., 1.),
+             (-1., 0., 1.), (0., 0., 1.), (1., 0., 1.),
+             (-1., -1., 1.), (0., -1., 1.), (1., -1., 1.)]
+        return inputs, hidden_layers, outputs
+
+    def fitness(self):
+        return self.points
 
     @property
     def n_resources(self):
