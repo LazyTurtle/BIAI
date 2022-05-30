@@ -5,19 +5,18 @@ import neat
 from pureples.hyperneat.hyperneat import create_phenotype_network
 from pureples.shared.substrate import Substrate
 
-mesa_config = dict()
-
 
 def evolve(genomes, config):
     # TODO glue together the code from pureples and mesa. the input is obtained by the agents and should be the list
     #  defined in input_coordinates, in that order
 
-    steps = mesa_config["steps"]
-    width = mesa_config["width"]
-    height = mesa_config["height"]
-    num_collectors = mesa_config["num_collectors"]
-    num_resources = mesa_config["num_resources"]
-    num_gathering_points = mesa_config["num_gathering_points"]
+    # TODO create a configuration file to speedup testing
+    steps = 50
+    width = 10
+    height = 10
+    num_collectors = 1
+    num_resources = 5
+    num_gathering_points = 1
 
     environment = ResourceModel(width, height, num_collectors, num_resources, num_gathering_points)
     input_coo, hidden_coo, output_coo = Collector.topology()
@@ -29,10 +28,10 @@ def evolve(genomes, config):
         environment.reset()
         # TODO modify in order to train multiple agents in the same environment
         agent = environment.agents(Collector)[0]
-        agent.update_sensors()
-        nn.reset()
+        nn.reset() #  in case we do multiple trials we have to reset the rnn before each of one
         total_reward = 0.
         for i in range(steps):
+            agent.update_sensors()
             input_data = agent.get_sensor_data()
             # The inputs are flattened in order to both have a list (required by neat) and to follow the order defined
             # by the coordinates of hyper neat

@@ -49,30 +49,31 @@ class ResourceModel(Model):
             agent = kwargs["agent"]
             action = kwargs["action"]
             y = int(action / 3)
-            x = action % 3
+            x = int(action % 3)
             dy = -(y - 1)  # mesa grid (bottom up) is vertically inverted in respect to numpy (top down)
             dx = x - 1
             new_x = agent.pos[0] + dx
             new_y = agent.pos[1] + dy
-            if self.grid.is_cell_empty(new_x, new_y):
-                self.grid.move_agent(agent, (new_x, new_y))
+            new_pos = self.grid.torus_adj((new_x, new_y))
+            if self.grid.is_cell_empty(new_pos):
+                self.grid.move_agent(agent, new_pos)
                 return 0, self.convergence()
             else:
                 current_agent = self.grid[x, y]
 
                 if type(current_agent) is Resource:
-                    if agent.current_resources == 0:
-                        agent.current_resources += 1
+                    if agent.resources == 0:
+                        agent.resources += 1
                         self.grid.remove_agent(current_agent)
-                        self.grid.move_agent(agent, (new_x, new_y))
+                        self.grid.move_agent(agent, new_pos)
                         return 1, self.convergence()
                     else:
                         return 0, self.convergence()
 
                 # TODO introduce a way to gather more than one resource at a time
                 if type(current_agent) is GatheringPoint:
-                    if agent.current_resources > 0:
-                        agent.current_resources = 0
+                    if agent.resources > 0:
+                        agent.resources = 0
                         return 1, self.convergence()
                     else:
                         return 0, self.convergence()
@@ -111,7 +112,7 @@ class ResourceModel(Model):
     # define if we have converged
     def convergence(self):
         # for now let's just check if we gathered all resources
-        return any([type(a) == Resource for a in self.schedule.agents])
+        return not any([type(a) == Resource for a in self.schedule.agents])
 
 
 class Collector(Agent):
@@ -123,13 +124,11 @@ class Collector(Agent):
         self.proximity = np.zeros(self.prox_shape)
         self.vision_distance = vision_distance
         self.vision = np.zeros((3, 3))
-        self.resources = np.zeros((3, 3))
+        self.resource_sensor = np.zeros((3, 3))
 
         # data used during each iteration
-        self.current_resources = 0
+        self.resources = 0
         self.points = 0
-
-        self.update_sensors()
 
     def update_sensors(self):
         self.update_proximity_information()
@@ -181,14 +180,14 @@ class Collector(Agent):
         self.vision = self.vision.clip(0, 1)
 
     def update_resource_sensor(self):
-        self.resources.fill(0)
+        self.resource_sensor.fill(0)
         neighbors = self.model.grid.get_neighbors(self.pos, moore=True, include_center=True, radius=1)
         for agent in neighbors:
-            if hasattr(agent, 'n_resources'):
-                n_resources = agent.n_resources
+            if hasattr(agent, 'resources'):
+                n_resources = agent.resources
                 j, i = self.array_indexes(agent, 1)
-                self.resources[i, j] = n_resources
-        self.resources = np.flip(self.resources, 0)
+                self.resource_sensor[i, j] = n_resources
+        self.resource_sensor = np.flip(self.resource_sensor, 0)
 
     @staticmethod
     def topology():
@@ -244,18 +243,19 @@ class Collector(Agent):
         return shape
 
     def get_sensor_data(self):
-        return np.dstack((self.proximity, self.vision, self.resources))
+        return np.array((self.proximity, self.vision, self.resource_sensor))
 
     def log(self):
         print(f"id:{self.unique_id}")
         print(self.proximity)
         print(self.vision)
-        print(self.resources)
+        print(self.resource_sensor)
 
 
 class Resource(Agent):
     def __init__(self, unique_id, model):
         super(Resource, self).__init__(unique_id, model)
+        self.resources = 1
 
     def portrayal(self):
         shape = {
@@ -267,10 +267,6 @@ class Resource(Agent):
             "Layer": 0,
             "r": 0.5}
         return shape
-
-    @property
-    def n_resources(self):
-        return 1
 
     def step(self) -> None:
         pass
