@@ -61,6 +61,12 @@ class ResourceModel(Model):
 
         return xdiff, ydiff, distance
 
+    def agents(self, agent_cl=None):
+        if agent_cl is None:
+            return self.schedule.agents
+        else:
+            return [agent for agent in self.schedule.agents if type(agent) is agent_cl]
+
 
 class Collector(Agent):
 
@@ -76,6 +82,13 @@ class Collector(Agent):
         # data used during each iteration
         self.current_resources = 0
         self.points = 0
+
+        self.update_sensors()
+
+    def update_sensors(self):
+        self.update_proximity_information()
+        self.update_vision_information()
+        self.update_resource_sensor()
 
     def update_proximity_information(self):
         # reset, 1 means that you can move freely there
@@ -132,7 +145,7 @@ class Collector(Agent):
         self.resources = np.flip(self.resources, 0)
 
     @staticmethod
-    def input_coordinates():
+    def topology():
         proximity_inputs = \
             [(-1., 1., -1.), (0., 1., -1.), (1., 1., -1.),
              (-1., 0., -1.), (0., 0., -1.), (1., 0., -1.),
@@ -175,10 +188,7 @@ class Collector(Agent):
         return x, y
 
     def step(self) -> None:
-        self.update_proximity_information()
-        self.update_vision_information()
-        self.update_resource_sensor()
-        self.log()
+        self.update_sensors()
 
     def portrayal(self):
         shape = {
@@ -190,6 +200,9 @@ class Collector(Agent):
             "Layer": 0,
             "r": 0.5}
         return shape
+
+    def get_sensor_data(self):
+        return np.dstack((self.proximity, self.vision, self.resources))
 
     def log(self):
         print(f"id:{self.unique_id}")
