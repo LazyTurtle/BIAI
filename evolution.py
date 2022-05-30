@@ -2,8 +2,8 @@ import numpy as np
 from source.resource import ResourceModel
 from source.resource import Collector
 import neat
-from pureples.pureples.hyperneat.hyperneat import create_phenotype_network
-from pureples.pureples.shared.substrate import Substrate
+from pureples.hyperneat.hyperneat import create_phenotype_network
+from pureples.shared.substrate import Substrate
 
 mesa_config = dict()
 
