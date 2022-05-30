@@ -40,8 +40,48 @@ class ResourceModel(Model):
                 y = self.random.randrange(self.grid.height)
             self.grid.place_agent(agent, (x, y))
 
-    def step(self) -> None:
-        self.schedule.step()
+    def step(self, **kwargs):
+        if len(kwargs) == 0:
+            self.schedule.step()
+            return
+
+        if "agent" in kwargs.keys() and "action" in kwargs.keys():
+            agent = kwargs["agent"]
+            action = kwargs["action"]
+            y = int(action / 3)
+            x = action % 3
+            dy = -(y - 1)  # mesa grid (bottom up) is vertically inverted in respect to numpy (top down)
+            dx = x - 1
+            new_x = agent.pos[0] + dx
+            new_y = agent.pos[1] + dy
+            if self.grid.is_cell_empty(new_x, new_y):
+                self.grid.move_agent(agent, (new_x, new_y))
+                return 0, self.convergence()
+            else:
+                current_agent = self.grid[x, y]
+
+                if type(current_agent) is Resource:
+                    if agent.current_resources == 0:
+                        agent.current_resources += 1
+                        self.grid.remove_agent(current_agent)
+                        self.grid.move_agent(agent, (new_x, new_y))
+                        return 1, self.convergence()
+                    else:
+                        return 0, self.convergence()
+
+                # TODO introduce a way to gather more than one resource at a time
+                if type(current_agent) is GatheringPoint:
+                    if agent.current_resources > 0:
+                        agent.current_resources = 0
+                        return 1, self.convergence()
+                    else:
+                        return 0, self.convergence()
+
+                if type(current_agent) is Collector:
+                    # for now, it's not planned to do anything in this case
+                    return 0, self.convergence()
+
+        return 0
 
     # takes into account the toroidal space
     def relative_distances(self, agent_a, agent_b):
@@ -66,6 +106,12 @@ class ResourceModel(Model):
             return self.schedule.agents
         else:
             return [agent for agent in self.schedule.agents if type(agent) is agent_cl]
+
+    # TODO define more sophisticated convergence criteria
+    # define if we have converged
+    def convergence(self):
+        # for now let's just check if we gathered all resources
+        return any([type(a) == Resource for a in self.schedule.agents])
 
 
 class Collector(Agent):
@@ -176,10 +222,6 @@ class Collector(Agent):
 
     def fitness(self):
         return self.points
-
-    @property
-    def n_resources(self):
-        return self.current_resources
 
     def array_indexes(self, neighbour, radius):
         dx, dy, _ = self.model.relative_distances(self, neighbour)
