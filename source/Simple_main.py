@@ -1,4 +1,5 @@
-from source.Simple import *
+# it requires a local import. Python works in mysterious ways
+from Simple import *
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
