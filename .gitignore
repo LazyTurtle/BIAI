@@ -131,6 +131,10 @@ report-latex/*.blg
 report-latex/*.fdb_latexmk
 report-latex/*.fls
 report-latex/report.synctex.gz
+report-latex/*.pdf
 
 # pureples folder
 pureples
+
+# .idea folder from pycharm
+.idea/*
