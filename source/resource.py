@@ -59,7 +59,7 @@ class ResourceModel(Model):
                 self.grid.move_agent(agent, new_pos)
                 return 0, self.convergence()
             else:
-                current_agent = self.grid[x, y]
+                current_agent = self.grid[new_pos[0], new_pos[1]]
 
                 if type(current_agent) is Resource:
                     if agent.resources == 0:
