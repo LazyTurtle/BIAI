@@ -42,7 +42,7 @@ class ResourceModel(Model):
         self.schedule.step()
         points = np.zeros(len(self.agents(Collector)))
         for i in range(len(self.agents(Collector))):
-            points[i] += self.schedule.agents[i].points
+            points[i] += self.agents(Collector)[i].points
 
         return points, self.convergence()
 

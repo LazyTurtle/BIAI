@@ -14,11 +14,11 @@ def evolve(genomes, config):
 
     # TODO create a configuration file to speedup testing
     steps = 50
-    width = 10
-    height = 10
-    num_collectors = 2
-    num_resources = 5
-    num_gathering_points = 1
+    width = 100
+    height = 100
+    num_collectors = 20
+    num_resources = 50
+    num_gathering_points = 5
     assert num_collectors == len(
         genomes), f"The number of collectors ({num_collectors}) does not match the number of genomes ({len(genomes)})"
 
@@ -42,7 +42,8 @@ def evolve(genomes, config):
         rewards += points
         if has_converged:
             break
-    fitness = rewards / math.sqrt(i) + 1
+    fitness = rewards  # / math.sqrt((i+1)/steps)
+    print(fitness)
 
     for i in range(len(environment.agents(Collector))):
         genome_id, genome = genomes[i]
@@ -51,9 +52,8 @@ def evolve(genomes, config):
 
 if __name__ == '__main__':
     neat_config_file = "source/config/NEAT.config"
-    generations = 2
+    generations = 10
     neat_config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet,
                                      neat.DefaultStagnation, neat_config_file)
     pop = neat.population.Population(neat_config)
     best = pop.run(evolve, generations)
-    print(best)
