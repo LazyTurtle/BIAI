@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 from source.resource import ResourceModel
 from source.resource import Collector
@@ -14,40 +16,37 @@ def evolve(genomes, config):
     steps = 50
     width = 10
     height = 10
-    num_collectors = len(genomes)
+    num_collectors = 2
     num_resources = 5
     num_gathering_points = 1
+    assert num_collectors == len(
+        genomes), f"The number of collectors ({num_collectors}) does not match the number of genomes ({len(genomes)})"
 
     environment = ResourceModel(width, height, num_collectors, num_resources, num_gathering_points)
     input_coo, hidden_coo, output_coo = Collector.topology()
     substrate = Substrate(input_coo, output_coo, hidden_coo)
 
+    collectors = environment.agents(Collector)
 
-
-    for genome_id, genome in genomes:
+    for i in range(len(genomes)):
+        genome_id, genome = genomes[i]
         cppn = neat.nn.FeedForwardNetwork.create(genome, config)
         nn = create_phenotype_network(cppn, substrate)
-        environment.reset()
-        # TODO modify in order to train multiple agents in the same environment
-        collector_agents = environment.agents(Collector)
-        nn.reset() #  in case we do multiple trials we have to reset the rnn before each of one
-        total_reward = 0.
-        agents_rewards = []
-        for agent in collector_agents:
-            for i in range(steps):
-                agent.update_sensors()
-                input_data = agent.get_sensor_data()
-                # The inputs are flattened in order to both have a list (required by neat) and to follow the order defined
-                # by the coordinates of hyper neat
-                input_data = input_data.flatten()
-                output = nn.activate(input_data)
-                action = np.argmax(output)
-                reward, done = environment.step(agent=agent, action=action)
-                total_reward += reward
-                if done:
-                    break
-            agents_rewards.append(total_reward / (i + 1))  # we want to favour faster agents
-        genome.fitness = sum(agents_rewards)
+        agent = collectors[i]
+        # nn.reset()  # in case we do multiple trials we have to reset the rnn before each of one
+        agent.evolution_setup(nn)
+
+    rewards = np.zeros(num_collectors)
+    for i in range(steps):
+        points, has_converged = environment.step()
+        rewards += points
+        if has_converged:
+            break
+    fitness = rewards / math.sqrt(i) + 1
+
+    for i in range(len(environment.agents(Collector))):
+        genome_id, genome = genomes[i]
+        genome.fitness = fitness[i]
 
 
 if __name__ == '__main__':

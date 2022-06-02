@@ -1,6 +1,6 @@
 from mesa import Agent
 import numpy as np
-from .resource import Resource, GatheringPoint
+import source.resource
 import math
 
 
@@ -15,9 +15,27 @@ class Collector(Agent):
         self.vision = np.zeros((3, 3))
         self.resource_sensor = np.zeros((3, 3))
 
-        # data used during each iteration
+        # data used during the evolution, to setup at each ResourceModel instantiation
+        self.neural_network = None
+        self.genome = None
         self.resources = 0
         self.points = 0
+
+    def evolution_setup(self, neural_network):
+        self.neural_network = neural_network
+        self.resources = 0
+        self.points = 0
+
+    def get_action(self, update_sensors=True):
+        if update_sensors:
+            self.update_sensors()
+        input_data = self.get_sensor_data()
+        # The inputs are flattened in order to both have a list (required by neat) and to follow the order defined
+        # by the coordinates of hyper neat
+        input_data = input_data.flatten()
+        output = self.neural_network.activate(input_data)
+        action = np.argmax(output)
+        return action
 
     def update_sensors(self):
         self.update_proximity_information()
@@ -36,9 +54,9 @@ class Collector(Agent):
 
             if type(agent) is Collector:
                 self.proximity[i, j] = 0
-            if type(agent) is Resource:
+            if type(agent) is source.resource.Resource:
                 self.proximity[i, j] = 0.5
-            if type(agent) is GatheringPoint:
+            if type(agent) is source.resource.GatheringPoint:
                 self.proximity[i, j] = 0.5
 
         # the browser grid cells are indexed by [x][y]
@@ -52,7 +70,7 @@ class Collector(Agent):
         neighbours = self.model.grid.get_neighbors(
             self.pos, moore=True, include_center=False, radius=self.vision_distance)
         for agent in neighbours:
-            if type(agent) is not Resource:
+            if type(agent) is not source.resource.Resource:
                 continue
 
             x, y, distance = self.model.relative_distances(self, agent)

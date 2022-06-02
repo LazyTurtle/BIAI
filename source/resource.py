@@ -1,8 +1,10 @@
 import math
+
+import numpy as np
 from mesa import Model, Agent
 from mesa.space import SingleGrid
-from mesa.time import BaseScheduler
 from .collector import Collector
+from .delegated_scheduler import DelegatedScheduler
 
 
 class ResourceModel(Model):
@@ -23,7 +25,7 @@ class ResourceModel(Model):
     def reset(self):
         self.grid = SingleGrid(self.width, self.height, True)
         self.n_agents = 0
-        self.schedule = BaseScheduler(self)
+        self.schedule = DelegatedScheduler(self, self.agent_step)
         self.fill_env(Resource, self.num_resources)
         self.fill_env(Collector, self.num_collectors)
         self.fill_env(GatheringPoint, self.num_gathering_points)
@@ -40,49 +42,62 @@ class ResourceModel(Model):
                 y = self.random.randrange(self.grid.height)
             self.grid.place_agent(agent, (x, y))
 
-    def step(self, **kwargs):
-        if len(kwargs) == 0:
-            self.schedule.step()
+    def step(self):
+        self.new_step_setup()
+        self.schedule.step()
+        points = np.zeros(len(self.agents(Collector)))
+        for i in range(len(self.agents(Collector))):
+            points[i] += self.schedule.agents[i].points
+
+        return points, self.convergence()
+
+    def new_step_setup(self):
+        for agent in self.schedule.agents:
+            agent.points = 0
+
+    def agent_step(self, agent):
+        if type(agent) is not Collector:
+            agent.step()
             return
 
-        if "agent" in kwargs.keys() and "action" in kwargs.keys():
-            agent = kwargs["agent"]
-            action = kwargs["action"]
-            y = int(action / 3)
-            x = int(action % 3)
-            dy = -(y - 1)  # mesa grid (bottom up) is vertically inverted in respect to numpy (top down)
-            dx = x - 1
-            new_x = agent.pos[0] + dx
-            new_y = agent.pos[1] + dy
-            new_pos = self.grid.torus_adj((new_x, new_y))
-            if self.grid.is_cell_empty(new_pos):
-                self.grid.move_agent(agent, new_pos)
-                return 0, self.convergence()
-            else:
-                current_agent = self.grid[new_pos[0], new_pos[1]]
+        action = agent.get_action()
+        self.calculate_action_outcome(agent, action)
 
-                if type(current_agent) is Resource:
-                    if agent.resources == 0:
-                        agent.resources += 1
-                        self.grid.remove_agent(current_agent)
-                        self.grid.move_agent(agent, new_pos)
-                        return 1, self.convergence()
-                    else:
-                        return 0, self.convergence()
+    def calculate_action_outcome(self, agent, action):
+        y = int(action / 3)
+        x = int(action % 3)
+        dy = -(y - 1)  # mesa grid (bottom up) is vertically inverted in respect to numpy (top down)
+        dx = x - 1
+        new_x = agent.pos[0] + dx
+        new_y = agent.pos[1] + dy
+        new_pos = self.grid.torus_adj((new_x, new_y))
 
-                # TODO introduce a way to gather more than one resource at a time
-                if type(current_agent) is GatheringPoint:
-                    if agent.resources > 0:
-                        agent.resources = 0
-                        return 1, self.convergence()
-                    else:
-                        return 0, self.convergence()
+        if self.grid.is_cell_empty(new_pos):
+            self.grid.move_agent(agent, new_pos)
+            agent.points = 0
+        else:
+            current_agent = self.grid[new_pos[0], new_pos[1]]
 
-                if type(current_agent) is Collector:
-                    # for now, it's not planned to do anything in this case
-                    return 0, self.convergence()
+            if type(current_agent) is Resource:
+                if agent.resources == 0:
+                    agent.resources += 1
+                    self.grid.remove_agent(current_agent)
+                    self.grid.move_agent(agent, new_pos)
+                    agent.points = 1
+                else:
+                    agent.points = 0
 
-        return 0
+            # TODO introduce a way to gather more than one resource at a time
+            if type(current_agent) is GatheringPoint:
+                if agent.resources > 0:
+                    agent.resources = 0
+                    agent.points = 1
+                else:
+                    agent.points = 0
+
+            if type(current_agent) is Collector:
+                # for now, it's not planned to do anything in this case
+                agent.points = 0
 
     # takes into account the toroidal space
     def relative_distances(self, agent_a, agent_b):
