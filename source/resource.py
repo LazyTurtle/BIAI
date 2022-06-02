@@ -35,12 +35,7 @@ class ResourceModel(Model):
             agent = agent_cl(self.n_agents, self)
             self.n_agents += 1
             self.schedule.add(agent)
-            x = self.random.randrange(self.grid.width)
-            y = self.random.randrange(self.grid.height)
-            while not self.grid.is_cell_empty((x, y)):
-                x = self.random.randrange(self.grid.width)
-                y = self.random.randrange(self.grid.height)
-            self.grid.place_agent(agent, (x, y))
+            self.grid.place_agent(agent, self.grid.find_empty())
 
     def step(self):
         self.new_step_setup()
