@@ -14,13 +14,15 @@ def evolve(genomes, config):
     steps = 50
     width = 10
     height = 10
-    num_collectors = 5
+    num_collectors = len(genomes)
     num_resources = 5
     num_gathering_points = 1
 
     environment = ResourceModel(width, height, num_collectors, num_resources, num_gathering_points)
     input_coo, hidden_coo, output_coo = Collector.topology()
     substrate = Substrate(input_coo, output_coo, hidden_coo)
+
+
 
     for genome_id, genome in genomes:
         cppn = neat.nn.FeedForwardNetwork.create(genome, config)
