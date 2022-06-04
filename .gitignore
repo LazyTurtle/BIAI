@@ -134,7 +134,7 @@ report-latex/report.synctex.gz
 report-latex/*.pdf
 
 # pureples folder
-pureples
+# pureples
 
 # .idea folder from pycharm
 .idea/*
