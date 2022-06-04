@@ -17,16 +17,13 @@ def evolve(genomes, config):
     width = 100
     height = 100
     num_collectors = len(genomes)  # it might change from its predefined 20
-    num_resources = 200
-    num_gathering_points = 10
+    num_resources = 100*10
+    num_gathering_points = 50
     assert num_collectors == len(
         genomes), f"The number of collectors ({num_collectors}) does not match the number of genomes ({len(genomes)})"
 
     environment = ResourceModel(width, height, num_collectors, num_resources, num_gathering_points)
     input_coo, hidden_coo, output_coo = Collector.topology()
-    print(input_coo)
-    print(hidden_coo)
-    print(output_coo)
     substrate = Substrate(input_coo, output_coo, hidden_coo)
 
     collectors = environment.agents(Collector)
