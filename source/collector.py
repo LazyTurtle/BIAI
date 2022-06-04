@@ -54,10 +54,10 @@ class Collector(Agent):
 
             if type(agent) is Collector:
                 self.proximity[i, j] = 0
-            if type(agent) is source.resource.Resource:
-                self.proximity[i, j] = 0.5
             if type(agent) is source.resource.GatheringPoint:
-                self.proximity[i, j] = 0.5
+                self.proximity[i, j] = 0.25
+            if type(agent) is source.resource.Resource:
+                self.proximity[i, j] = 0.50
 
         # the browser grid cells are indexed by [x][y]
         # where [0][0] is assumed to be the bottom-left and [width-1][height-1] is the top-right
@@ -99,33 +99,51 @@ class Collector(Agent):
 
     @staticmethod
     def topology():
-        proximity_inputs = \
-            [(-1., 1., -1.), (0., 1., -1.), (1., 1., -1.),
-             (-1., 0., -1.), (0., 0., -1.), (1., 0., -1.),
-             (-1., -1., -1.), (0., -1., -1.), (1., -1., -1.)]
-        vision_inputs = \
-            [(-1., 1., -0.5), (0., 1., -0.5), (1., 1., -0.5),
-             (-1., 0., -0.5), (0., 0., -0.5), (1., 0., -0.5),
-             (-1., -1., -0.5), (0., -1., -0.5), (1., -1., -0.5)]
-        resources_inputs = \
-            [(-1., 1., 0.), (0., 1., 0.), (1., 1., 0.),
-             (-1., 0., 0.), (0., 0., 0.), (1., 0., 0.),
-             (-1., -1., 0.), (0., -1., 0.), (1., -1., 0.)]
-        inputs = proximity_inputs + vision_inputs + resources_inputs
-        hidden_layers = \
-            [
-                [(-1., 1., 0.25), (0., 1., 0.25), (1., 1., 0.25),
-                 (-1., 0., 0.25), (0., 0., 0.25), (1., 0., 0.25),
-                 (-1., -1., 0.25), (0., -1., 0.25), (1., -1., 0.25),
-                 (-1., 1., 0.5), (0., 1., 0.5), (1., 1., 0.5),
-                 (-1., 0., 0.5), (0., 0., 0.5), (1., 0., 0.5),
-                 (-1., -1., 0.5), (0., -1., 0.5), (1., -1., 0.5)]
-            ]
-        outputs = \
-            [(-1., 1., 1.), (0., 1., 1.), (1., 1., 1.),
-             (-1., 0., 1.), (0., 0., 1.), (1., 0., 1.),
-             (-1., -1., 1.), (0., -1., 1.), (1., -1., 1.)]
-        return inputs, hidden_layers, outputs
+        n = 3  # input matrix dimensions
+        min_x = -1
+        max_x = 1
+
+        min_y = -1
+        max_y = 1
+
+        min_z = -1
+        max_z = -0.4
+
+        # for the inputs we have a 3x3 matrix for each sensor, and each sensor is a channel
+        inputs = list()
+        for z in np.linspace(min_z, max_z, 3):
+            for y in np.linspace(max_y, min_y, n):  # max to min to mirror how np arrange x and y coordinates
+                for x in np.linspace(min_x, max_x, n):
+                    inputs.append((x, y, z))
+
+        # the first hidden layer will be a 3x3x3 tensor
+        min_z = -0.3
+        max_z = 0.3
+        hidden_layer_1 = list()
+        for z in np.linspace(min_z, max_z, 3):
+            for y in np.linspace(max_y, min_y, n):
+                for x in np.linspace(min_x, max_x, n):
+                    hidden_layer_1.append((x, y, z))
+
+        # the second hidden layer will be a 3x3x2 tensor
+        min_z = 0.4
+        max_z = 0.8
+        hidden_layer_2 = list()
+        for z in np.linspace(min_z, max_z, 2):
+            for y in np.linspace(max_y, min_y, n):
+                for x in np.linspace(min_x, max_x, n):
+                    hidden_layer_2.append((x, y, z))
+        hidden_layers = [hidden_layer_2, hidden_layer_1]
+
+        min_z = 1
+        max_z = 1
+        output = list()
+        for z in np.linspace(min_z, max_z, 1):
+            for y in np.linspace(max_y, min_y, n):
+                for x in np.linspace(min_x, max_x, n):
+                    output.append((x, y, z))
+
+        return inputs, hidden_layers, output
 
     def fitness(self):
         return self.points
