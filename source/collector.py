@@ -1,3 +1,5 @@
+import random
+
 from mesa import Agent
 import numpy as np
 import source.resource
@@ -17,7 +19,7 @@ class Collector(Agent):
 
         # data used during the evolution, to setup at each ResourceModel instantiation
         self.neural_network = None
-        self.genome = None
+        self.debug = False
         self.resources = 0
         self.points = 0
 
@@ -26,15 +28,25 @@ class Collector(Agent):
         self.resources = 0
         self.points = 0
 
-    def get_action(self, update_sensors=True):
-        if update_sensors:
-            self.update_sensors()
+    def get_action(self):
+        self.update_sensors()
         input_data = self.get_sensor_data()
         # The inputs are flattened in order to both have a list (required by neat) and to follow the order defined
         # by the coordinates of hyper neat
         input_data = input_data.flatten()
         output = self.neural_network.activate(input_data)
-        action = np.argmax(output)
+        # in case multiple actions have the same maximum value, possible at the start
+        max_action = max(output)
+        actions = [i for i, o in enumerate(output) if o == max_action]
+        action = random.choice(actions)
+        if self.debug:
+            print("Input data")
+            self.log()
+            a = np.array(output)
+            a = a.reshape((3, 3))
+            print("Output")
+            print(a)
+            print(f"Action taken: {action}")
         return action
 
     def update_sensors(self):
