@@ -101,9 +101,11 @@ def query_cppn(coord1, coord2, outgoing, cppn, max_weight=5.0):
     """
 
     if outgoing:
-        i = [coord1[0], coord1[1], coord2[0], coord2[1], 1.0]
+        # i = [coord1[0], coord1[1], coord2[0], coord2[1], 1.0]
+        i = list(coord1) + list(coord2)
     else:
-        i = [coord2[0], coord2[1], coord1[0], coord1[1], 1.0]
+        # i = [coord2[0], coord2[1], coord1[0], coord1[1], 1.0]
+        i = list(coord2) + list(coord1)
     w = cppn.activate(i)[0]
     if abs(w) > 0.2:  # If abs(weight) is below threshold, treat weight as 0.0.
         if w > 0:
