@@ -13,17 +13,20 @@ def evolve(genomes, config):
     #  defined in input_coordinates, in that order
 
     # TODO create a configuration file to speedup testing
-    steps = 50
+    steps = 500
     width = 100
     height = 100
-    num_collectors = 20
-    num_resources = 50
-    num_gathering_points = 5
+    num_collectors = len(genomes)  # it might change from its predefined 20
+    num_resources = 200
+    num_gathering_points = 10
     assert num_collectors == len(
         genomes), f"The number of collectors ({num_collectors}) does not match the number of genomes ({len(genomes)})"
 
     environment = ResourceModel(width, height, num_collectors, num_resources, num_gathering_points)
     input_coo, hidden_coo, output_coo = Collector.topology()
+    print(input_coo)
+    print(hidden_coo)
+    print(output_coo)
     substrate = Substrate(input_coo, output_coo, hidden_coo)
 
     collectors = environment.agents(Collector)
@@ -43,7 +46,7 @@ def evolve(genomes, config):
         if has_converged:
             break
     fitness = rewards  # / math.sqrt((i+1)/steps)
-    print(fitness)
+    print(fitness.max())
 
     for i in range(len(environment.agents(Collector))):
         genome_id, genome = genomes[i]
@@ -52,7 +55,7 @@ def evolve(genomes, config):
 
 if __name__ == '__main__':
     neat_config_file = "source/config/NEAT.config"
-    generations = 10
+    generations = 200
     neat_config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet,
                                      neat.DefaultStagnation, neat_config_file)
     pop = neat.population.Population(neat_config)

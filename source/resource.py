@@ -59,6 +59,7 @@ class ResourceModel(Model):
         self.calculate_action_outcome(agent, action)
 
     def calculate_action_outcome(self, agent, action):
+        # get the new absolute position
         y = int(action / 3)
         x = int(action % 3)
         dy = -(y - 1)  # mesa grid (bottom up) is vertically inverted in respect to numpy (top down)
@@ -148,6 +149,7 @@ class Resource(Agent):
 class GatheringPoint(Agent):
     def __init__(self, unique_id, model):
         super(GatheringPoint, self).__init__(unique_id, model)
+        self.resources = -1
 
     def portrayal(self):
         shape = {
