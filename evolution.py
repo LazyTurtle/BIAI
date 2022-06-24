@@ -13,65 +13,46 @@ def evolve(genomes, config):
     #  defined in input_coordinates, in that order
 
     # TODO create a configuration file to speedup testing
+    steps = 500
+    width = 100
+    height = 100
+    num_collectors = len(genomes)  # it might change from its predefined 20
+    num_resources = 100*10
+    num_gathering_points = 50
+    assert num_collectors == len(
+        genomes), f"The number of collectors ({num_collectors}) does not match the number of genomes ({len(genomes)})"
 
-    print ("Starting new generation \n")
+    environment = ResourceModel(width, height, num_collectors, num_resources, num_gathering_points)
+    input_coo, hidden_coo, output_coo = Collector.topology()
+    substrate = Substrate(input_coo, output_coo, hidden_coo)
 
-    groups_amount = 5
-    group_size = len(genomes) // groups_amount
+    collectors = environment.agents(Collector)
 
-    genome_groups = []
-    group_start = 0
-    group_end = group_size
-    for i in range(groups_amount):
-        if i == group_size - 1:
-            genome_groups.append((genomes[group_start:]))
-        else:
-            genome_groups.append(genomes[group_start:group_end])
-        group_start += group_size
-        group_end += group_size
+    for i in range(len(genomes)):
+        genome_id, genome = genomes[i]
+        cppn = neat.nn.FeedForwardNetwork.create(genome, config)
+        nn = create_phenotype_network(cppn, substrate)
+        agent = collectors[i]
+        # nn.reset()  # in case we do multiple trials we have to reset the rnn before each of one
+        agent.evolution_setup(nn)
 
-    for group in genome_groups:
-        steps = 500
-        width = 40
-        height = 40
-        num_collectors = len(group)  # it might change from its predefined 20
-        num_resources = 100*10
-        num_gathering_points = 500
-        assert num_collectors == len(
-            group), f"The number of collectors ({num_collectors}) does not match the number of genomes ({len(group)})"
+    rewards = np.zeros(num_collectors)
+    for i in range(steps):
+        points, has_converged = environment.step()
+        rewards += points
+        if has_converged:
+            break
+    fitness = rewards  # / math.sqrt((i+1)/steps)
+    print(f"Max: {'{:.2f}'.format(fitness.max())}, Mean: {'{:.2f}'.format(fitness.mean())}, Min: {'{:.2f}'.format(fitness.min())}")
 
-        environment = ResourceModel(width, height, num_collectors, num_resources, num_gathering_points)
-        input_coo, hidden_coo, output_coo = Collector.topology()
-        substrate = Substrate(input_coo, output_coo, hidden_coo)
-
-        collectors = environment.agents(Collector)
-
-        for i in range(len(group)):
-            genome_id, genome = group[i]
-            cppn = neat.nn.FeedForwardNetwork.create(genome, config)
-            nn = create_phenotype_network(cppn, substrate)
-            agent = collectors[i]
-            # nn.reset()  # in case we do multiple trials we have to reset the rnn before each of one
-            agent.evolution_setup(nn)
-
-        rewards = np.zeros(num_collectors)
-        for i in range(steps):
-            points, has_converged = environment.step()
-            rewards += points
-            if has_converged:
-                print("Reached convergence before running out of steps!")
-                break
-        fitness = rewards  # / math.sqrt((i+1)/steps)
-        print(fitness.max())
-
-        for i in range(len(environment.agents(Collector))):
-            genome_id, genome = group[i]
-            genome.fitness = fitness[i]
+    for i in range(len(environment.agents(Collector))):
+        genome_id, genome = genomes[i]
+        genome.fitness = fitness[i]
 
 
 if __name__ == '__main__':
     neat_config_file = "source/config/NEAT.config"
-    generations = 20
+    generations = 200
     neat_config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet,
                                      neat.DefaultStagnation, neat_config_file)
     pop = neat.population.Population(neat_config)
