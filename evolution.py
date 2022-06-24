@@ -1,5 +1,7 @@
 import math
-
+import logging
+from datetime import datetime
+logging.basicConfig(filename=datetime.now().strftime('logs/log_%H_%M_%d_%m_%Y.log'), level=logging.INFO)
 import numpy as np
 from source.resource import ResourceModel
 from source.resource import Collector
@@ -19,35 +21,43 @@ def evolve(genomes, config):
     num_collectors = len(genomes)  # it might change from its predefined 20
     num_resources = 100*10
     num_gathering_points = 50
+
+    trials_for_agent = 1
+
     assert num_collectors == len(
         genomes), f"The number of collectors ({num_collectors}) does not match the number of genomes ({len(genomes)})"
 
-    environment = ResourceModel(width, height, num_collectors, num_resources, num_gathering_points)
+    environment = ResourceModel(width, height, 1, num_resources, num_gathering_points)
     input_coo, hidden_coo, output_coo = Collector.topology()
     substrate = Substrate(input_coo, output_coo, hidden_coo)
 
-    collectors = environment.agents(Collector)
-
-    for i in range(len(genomes)):
-        genome_id, genome = genomes[i]
+    for genome_id, genome in genomes:
+        logging.info(f"Genome id: {genome_id}")
         cppn = neat.nn.FeedForwardNetwork.create(genome, config)
         nn = create_phenotype_network(cppn, substrate)
-        agent = collectors[i]
-        # nn.reset()  # in case we do multiple trials we have to reset the rnn before each of one
-        agent.evolution_setup(nn)
+        fitness = 0
 
-    rewards = np.zeros(num_collectors)
-    for i in range(steps):
-        points, has_converged = environment.step()
-        rewards += points
-        if has_converged:
-            break
-    fitness = rewards  # / math.sqrt((i+1)/steps)
-    print(f"Max: {'{:.2f}'.format(fitness.max())}, Mean: {'{:.2f}'.format(fitness.mean())}, Min: {'{:.2f}'.format(fitness.min())}")
+        for t in range(trials_for_agent):
+            logging.info(f"Trials {t}")
+            environment.reset()
+            nn.reset()
+            collector = environment.agents(Collector)[0]
+            collector.evolution_setup(nn)
+            reward = 0
 
-    for i in range(len(environment.agents(Collector))):
-        genome_id, genome = genomes[i]
-        genome.fitness = fitness[i]
+            for i in range(steps):
+                points, has_converged = environment.step()
+                reward += points
+                if has_converged:
+                    break
+
+            logging.info(f"Reward for trial {t}: {reward}")
+            logging.info(f"Converged in {i+1} steps")
+
+            fitness += reward / math.sqrt((i+1)/steps)
+
+        genome.fitness = fitness
+        logging.info(f"fitness: {genome.fitness}")
 
 
 if __name__ == '__main__':

@@ -1,5 +1,4 @@
 import random
-import logging
 from mesa import Agent
 import numpy as np
 import source.resource
@@ -30,17 +29,19 @@ class Collector(Agent):
     def get_action(self):
         self.update_sensors()
         input_data = self.get_sensor_data()
-        logging.info(f"Collector {self.unique_id}, input from sensors: {input_data}")
+        # logging.info(f"Collector {self.unique_id}")
+        # logging.info("From sensors:")
+        # logging.info(input_data)
         # The inputs are flattened in order to both have a list (required by neat) and to follow the order defined
         # by the coordinates of hyper neat
         input_data = input_data.flatten()
         output = self.neural_network.activate(input_data)
-        logging.info(f"Collector {self.unique_id}, output activations: {output}")
+        # logging.info(f"output activations: {output}")
         # in case multiple actions have the same maximum value, possible at the start
         max_action = max(output)
         actions = [i for i, o in enumerate(output) if o == max_action]
         action = random.choice(actions)
-        logging.info(f"Collector {self.unique_id}, action chosen: {action}")
+        # logging.info(f"action chosen: {action}")
         return action
 
     def update_sensors(self):
