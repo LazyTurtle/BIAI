@@ -1,5 +1,5 @@
 import random
-
+import logging
 from mesa import Agent
 import numpy as np
 import source.resource
@@ -17,9 +17,8 @@ class Collector(Agent):
         self.vision = np.zeros((3, 3))
         self.resource_sensor = np.zeros((3, 3))
 
-        # data used during the evolution, to setup at each ResourceModel instantiation
+        # data used during the evolution, to set up at each ResourceModel instantiation
         self.neural_network = None
-        self.debug = False
         self.resources = 0
         self.points = 0
 
@@ -31,22 +30,17 @@ class Collector(Agent):
     def get_action(self):
         self.update_sensors()
         input_data = self.get_sensor_data()
+        logging.info(f"Collector {self.unique_id}, input from sensors: {input_data}")
         # The inputs are flattened in order to both have a list (required by neat) and to follow the order defined
         # by the coordinates of hyper neat
         input_data = input_data.flatten()
         output = self.neural_network.activate(input_data)
+        logging.info(f"Output activations: {output}")
         # in case multiple actions have the same maximum value, possible at the start
         max_action = max(output)
         actions = [i for i, o in enumerate(output) if o == max_action]
         action = random.choice(actions)
-        if self.debug:
-            print("Input data")
-            self.log()
-            a = np.array(output)
-            a = a.reshape((3, 3))
-            print("Output")
-            print(a)
-            print(f"Action taken: {action}")
+        logging.info(f"Action chosen: {action}")
         return action
 
     def update_sensors(self):
@@ -183,8 +177,3 @@ class Collector(Agent):
     def get_sensor_data(self):
         return np.array((self.proximity, self.vision, self.resource_sensor))
 
-    def log(self):
-        print(f"id:{self.unique_id}")
-        print(self.proximity)
-        print(self.vision)
-        print(self.resource_sensor)
