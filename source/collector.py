@@ -14,8 +14,8 @@ class Collector(Agent):
         self.prox_shape = (self.proximity_distance * 2 + 1, self.proximity_distance * 2 + 1)
         self.proximity = np.zeros(self.prox_shape)
         self.vision_distance = vision_distance
-        self.vision = np.zeros((3, 3))
-        self.resource_sensor = np.zeros((3, 3))
+        self.resources_vision = None
+        self.gathering_vision = None
 
         # data used during the evolution, to set up at each ResourceModel instantiation
         self.neural_network = None
@@ -35,20 +35,20 @@ class Collector(Agent):
         # by the coordinates of hyper neat
         input_data = input_data.flatten()
         output = self.neural_network.activate(input_data)
-        logging.info(f"Output activations: {output}")
+        logging.info(f"Collector {self.unique_id}, output activations: {output}")
         # in case multiple actions have the same maximum value, possible at the start
         max_action = max(output)
         actions = [i for i, o in enumerate(output) if o == max_action]
         action = random.choice(actions)
-        logging.info(f"Action chosen: {action}")
+        logging.info(f"Collector {self.unique_id}, action chosen: {action}")
         return action
 
     def update_sensors(self):
-        self.update_proximity_information()
-        self.update_vision_information()
-        self.update_resource_sensor()
+        self.update_proximity()
+        self.update_resource_vision()
+        self.update_gathering_vision()
 
-    def update_proximity_information(self):
+    def update_proximity(self):
         # reset, 1 means that you can move freely there
         self.proximity.fill(1)
         neighbours = self.model.grid.get_neighbors(
@@ -70,38 +70,38 @@ class Collector(Agent):
         # it's the opposite vertical representation of numpy
         self.proximity = np.flip(self.proximity, 0)
 
-    def update_vision_information(self):
+    def update_resource_vision(self):
+        def resource_check(agent): return type(agent) == source.resource.Resource
+        self.resources_vision = self.selective_vision(self.vision_distance, resource_check)
 
-        self.vision.fill(0)
-        neighbours = self.model.grid.get_neighbors(
-            self.pos, moore=True, include_center=False, radius=self.vision_distance)
+    def update_gathering_vision(self):
+        def gathering_check(agent): return type(agent) == source.resource.GatheringPoint
+        self.gathering_vision = self.selective_vision(self.vision_distance, gathering_check)
+
+        # is_visible should be a function that returns True if the argument is something that we want to see
+    def selective_vision(self, vision_range, is_visible):
+        vision = np.zeros((3, 3))
+
+        neighbours = self.model.grid.get_neighbors(self.pos, moore=True, include_center=True, radius=vision_range)
         for agent in neighbours:
-            if type(agent) is not source.resource.Resource:
+            if not is_visible(agent):
                 continue
 
             x, y, distance = self.model.relative_distances(self, agent)
             max_env_distance = max(self.model.grid.width, self.model.grid.height)
-            food_distance = 1 - (distance / max_env_distance)
+            agent_distance = 1 - (distance / max_env_distance)
             bearings = math.atan2(y, x)
             mx = math.cos(bearings)
             my = math.sin(bearings)
             rx = round(mx)
             ry = round(my)
-            i = ry + int(self.vision.shape[0] / 2)
-            j = rx + int(self.vision.shape[0] / 2)
-            self.vision[i, j] += food_distance
-        self.vision = np.flip(self.vision, 0)
-        self.vision = self.vision.clip(0, 1)
+            i = ry + int(vision.shape[0] / 2)
+            j = rx + int(vision.shape[0] / 2)
+            vision[i, j] += agent_distance
 
-    def update_resource_sensor(self):
-        self.resource_sensor.fill(0)
-        neighbors = self.model.grid.get_neighbors(self.pos, moore=True, include_center=True, radius=1)
-        for agent in neighbors:
-            if hasattr(agent, 'resources'):
-                n_resources = agent.resources
-                j, i = self.array_indexes(agent, 1)
-                self.resource_sensor[i, j] = n_resources
-        self.resource_sensor = np.flip(self.resource_sensor, 0)
+        vision = np.flip(vision, 0)  # np and mesa y-axis are opposite to each other
+        vision = vision.clip(0, 1)
+        return vision
 
     @staticmethod
     def topology():
@@ -175,5 +175,4 @@ class Collector(Agent):
         return shape
 
     def get_sensor_data(self):
-        return np.array((self.proximity, self.vision, self.resource_sensor))
-
+        return np.array((self.proximity, self.resources_vision, self.gathering_vision))
