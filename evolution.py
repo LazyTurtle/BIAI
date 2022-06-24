@@ -43,7 +43,7 @@ def evolve(genomes, config):
         if has_converged:
             break
     fitness = rewards  # / math.sqrt((i+1)/steps)
-    print(fitness.max())
+    print(f"Max: {'{:.2f}'.format(fitness.max())}, Mean: {'{:.2f}'.format(fitness.mean())}, Min: {'{:.2f}'.format(fitness.min())}")
 
     for i in range(len(environment.agents(Collector))):
         genome_id, genome = genomes[i]
