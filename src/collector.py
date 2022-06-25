@@ -7,7 +7,7 @@ import math
 
 class Collector(Agent):
 
-    def __init__(self, unique_id, model, proximity_distance=1, vision_distance=3):
+    def __init__(self, unique_id, model, proximity_distance=1, vision_distance=5):
         super(Collector, self).__init__(unique_id, model)
         self.proximity_distance = proximity_distance
         self.prox_shape = (self.proximity_distance * 2 + 1, self.proximity_distance * 2 + 1)
@@ -37,7 +37,7 @@ class Collector(Agent):
         input_data = input_data.flatten()
         output = self.neural_network.activate(input_data)
         # logging.info(f"output activations: {output}")
-        # in case multiple actions have the same maximum value, possible at the start
+        # in case multiple actions have the same maximum value, often the case at the start
         max_action = max(output)
         actions = [i for i, o in enumerate(output) if o == max_action]
         action = random.choice(actions)
@@ -55,7 +55,7 @@ class Collector(Agent):
         neighbours = self.model.grid.get_neighbors(
             self.pos, moore=True, include_center=False, radius=self.proximity_distance)
 
-        self.proximity[self.proximity_distance, self.proximity_distance] = 0
+        self.proximity[self.proximity_distance, self.proximity_distance] = 0 if self.resources == 0 else 1
         for agent in neighbours:
             j, i = self.array_indexes(agent, self.proximity_distance)
 
@@ -79,7 +79,7 @@ class Collector(Agent):
         def gathering_check(agent): return type(agent) == src.resource.GatheringPoint
         self.gathering_vision = self.selective_vision(self.vision_distance, gathering_check)
 
-        # is_visible should be a function that returns True if the argument is something that we want to see
+    # is_visible should be a function that returns True if the argument is something that we want to see
     def selective_vision(self, vision_range, is_visible):
         vision = np.zeros((3, 3))
 
@@ -161,7 +161,7 @@ class Collector(Agent):
         y = dy + radius
         return x, y
 
-    def step(self) -> None:
+    def step(self):
         self.update_sensors()
 
     def portrayal(self):

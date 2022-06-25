@@ -1,8 +1,6 @@
 import math
 import logging
 from datetime import datetime
-logging.basicConfig(filename=datetime.now().strftime('logs/log_%H_%M_%d_%m_%Y.log'), level=logging.INFO)
-import numpy as np
 from src.resource import ResourceModel
 from src.resource import Collector
 import neat
@@ -11,16 +9,17 @@ from pureples.shared.substrate import Substrate
 
 
 def evolve(genomes, config):
+
     # TODO glue together the code from pureples and mesa. the input is obtained by the agents and should be the list
     #  defined in input_coordinates, in that order
 
     # TODO create a configuration file to speedup testing
     steps = 500
-    width = 100
-    height = 100
+    width = 25
+    height = 25
     num_collectors = len(genomes)  # it might change from its predefined 20
-    num_resources = 100*10
-    num_gathering_points = 50
+    num_resources = 25 * 5
+    num_gathering_points = 25
 
     trials_for_agent = 1
 
@@ -50,16 +49,26 @@ def evolve(genomes, config):
                 if has_converged:
                     break
 
-            logging.info(f"Reward for trial {t}: {reward}")
-            logging.info(f"Converged in {i+1} steps")
+            #logging.info(f"Reward for trial {t}: {reward}")
+            #logging.info(f"Converged in {i + 1} steps")
 
-            fitness += reward / math.sqrt((i+1)/steps)
+            fitness += reward / math.sqrt((i + 1) / steps)
 
         genome.fitness = fitness
         logging.info(f"fitness: {genome.fitness}")
 
 
+def setup_logging():
+    # filename = datetime.now().strftime('logs/log_%H_%M_%d_%m_%Y.log')
+    filename = datetime.now().strftime('logs/log_%d_%m_%Y.log')
+    logging.basicConfig(
+        filename=filename,
+        level=logging.DEBUG,
+        filemode="w+")  # I'm only interested in the last log of the day, so I just rewrite over the same file
+
+
 if __name__ == '__main__':
+    setup_logging()
     neat_config_file = "src/config/NEAT.config"
     generations = 200
     neat_config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet,
