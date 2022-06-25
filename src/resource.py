@@ -26,9 +26,9 @@ class ResourceModel(Model):
         self.grid = SingleGrid(self.width, self.height, True)
         self.n_agents = 0
         self.schedule = DelegatedScheduler(self, self.agent_step)
-        self.fill_env(Resource, self.num_resources)
         self.fill_env(Collector, self.num_collectors)
         self.fill_env(GatheringPoint, self.num_gathering_points)
+        self.fill_env(Resource, self.num_resources)
 
     def fill_env(self, agent_cl, n):
         for i in range(n):

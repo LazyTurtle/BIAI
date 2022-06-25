@@ -38,7 +38,6 @@ def evolve(genomes, config):
         fitness = 0
 
         for t in range(trials_for_agent):
-            logging.info(f"Trials {t}")
             environment.reset()
             nn.reset()
             collector = environment.agents(Collector)[0]
