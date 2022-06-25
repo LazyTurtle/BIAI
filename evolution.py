@@ -33,12 +33,12 @@ def evolve(genomes, config):
 
     for genome_group in groups:
         # TODO create a configuration file to speedup testing
-        steps = 50
-        width = 10
-        height = 10
+        steps = 100
+        width = 100
+        height = 100
         num_collectors = len(genome_group)  # it might change from its predefined 20
-        num_resources = 40
-        num_gathering_points = 10
+        num_resources = 100*10
+        num_gathering_points = 50
         assert num_collectors == len(
             genome_group), f"The number of collectors ({num_collectors}) does not match the number of genome_group ({len(genome_group)})"
 
