@@ -16,14 +16,15 @@ def evolve(genomes, config):
     print("\n Evolving a new generation:")
     # divide genomes into n groups; for each group we will initialize an enviroment and test them inside it
     # the groups are heterogeneous (e.g: each member in the group has a different genome)
-    group_size = 20
+    group_size = 10
     start = 0
     end = group_size
+    number_of_groups = math.ceil(len(genomes)/group_size)
     groups = list()
     random.shuffle(genomes)
 
-    for group_index in range(len(genomes)//group_size):
-        if group_index < len(genomes)//group_size:
+    for group_index in range(number_of_groups):
+        if group_index < number_of_groups:
             groups.append(genomes[start:end])
         else:
             groups.append(genomes[start:])
@@ -32,12 +33,12 @@ def evolve(genomes, config):
 
     for genome_group in groups:
         # TODO create a configuration file to speedup testing
-        steps = 500
-        width = 100
-        height = 100
+        steps = 50
+        width = 10
+        height = 10
         num_collectors = len(genome_group)  # it might change from its predefined 20
-        num_resources = 100*10
-        num_gathering_points = 50
+        num_resources = 40
+        num_gathering_points = 10
         assert num_collectors == len(
             genome_group), f"The number of collectors ({num_collectors}) does not match the number of genome_group ({len(genome_group)})"
 
