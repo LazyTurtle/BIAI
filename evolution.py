@@ -3,8 +3,8 @@ import logging
 from datetime import datetime
 logging.basicConfig(filename=datetime.now().strftime('logs/log_%H_%M_%d_%m_%Y.log'), level=logging.INFO)
 import numpy as np
-from source.resource import ResourceModel
-from source.resource import Collector
+from src.resource import ResourceModel
+from src.resource import Collector
 import neat
 from pureples.hyperneat.hyperneat import create_phenotype_network
 from pureples.shared.substrate import Substrate
@@ -61,7 +61,7 @@ def evolve(genomes, config):
 
 
 if __name__ == '__main__':
-    neat_config_file = "source/config/NEAT.config"
+    neat_config_file = "src/config/NEAT.config"
     generations = 200
     neat_config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet,
                                      neat.DefaultStagnation, neat_config_file)

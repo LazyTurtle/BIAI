@@ -1,7 +1,7 @@
 import random
 from mesa import Agent
 import numpy as np
-import source.resource
+import src.resource
 import math
 
 
@@ -61,9 +61,9 @@ class Collector(Agent):
 
             if type(agent) is Collector:
                 self.proximity[i, j] = 0
-            if type(agent) is source.resource.GatheringPoint:
+            if type(agent) is src.resource.GatheringPoint:
                 self.proximity[i, j] = 0.25
-            if type(agent) is source.resource.Resource:
+            if type(agent) is src.resource.Resource:
                 self.proximity[i, j] = 0.50
 
         # the browser grid cells are indexed by [x][y]
@@ -72,11 +72,11 @@ class Collector(Agent):
         self.proximity = np.flip(self.proximity, 0)
 
     def update_resource_vision(self):
-        def resource_check(agent): return type(agent) == source.resource.Resource
+        def resource_check(agent): return type(agent) == src.resource.Resource
         self.resources_vision = self.selective_vision(self.vision_distance, resource_check)
 
     def update_gathering_vision(self):
-        def gathering_check(agent): return type(agent) == source.resource.GatheringPoint
+        def gathering_check(agent): return type(agent) == src.resource.GatheringPoint
         self.gathering_vision = self.selective_vision(self.vision_distance, gathering_check)
 
         # is_visible should be a function that returns True if the argument is something that we want to see
