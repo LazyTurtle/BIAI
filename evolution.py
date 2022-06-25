@@ -7,7 +7,8 @@ import neat
 from pureples.hyperneat.hyperneat import create_phenotype_network
 from pureples.shared.substrate import Substrate
 
-
+fit_max = list()
+fit_mean = list()
 def evolve(genomes, config):
 
     # TODO glue together the code from pureples and mesa. the input is obtained by the agents and should be the list
@@ -31,7 +32,7 @@ def evolve(genomes, config):
     substrate = Substrate(input_coo, output_coo, hidden_coo)
 
     for genome_id, genome in genomes:
-        logging.info(f"Genome id: {genome_id}")
+        # logging.info(f"Genome id: {genome_id}")
         cppn = neat.nn.FeedForwardNetwork.create(genome, config)
         nn = create_phenotype_network(cppn, substrate)
         fitness = 0
@@ -49,13 +50,21 @@ def evolve(genomes, config):
                 if has_converged:
                     break
 
-            #logging.info(f"Reward for trial {t}: {reward}")
-            #logging.info(f"Converged in {i + 1} steps")
+            # logging.info(f"Reward for trial {t}: {reward}")
+            # logging.info(f"Converged in {i + 1} steps")
 
             fitness += reward / math.sqrt((i + 1) / steps)
 
-        genome.fitness = fitness
-        logging.info(f"fitness: {genome.fitness}")
+        genome.fitness = fitness[0]
+        # logging.info(f"Genome id {genome_id}, fitness: {genome.fitness}")
+    fitnesses = [g.fitness for _, g in genomes]
+    max_fitness = max(fitnesses)
+    mean_fitness = sum(fitnesses)/len(fitnesses)
+    fit_max.append(max_fitness)
+    fit_mean.append(mean_fitness)
+    logging.info(f"Generation {len(fit_max)}")
+    logging.info(f"Mean fitness: {mean_fitness}")
+    logging.info(f"Max fitness: {max_fitness}")
 
 
 def setup_logging():
@@ -64,7 +73,7 @@ def setup_logging():
     logging.basicConfig(
         filename=filename,
         level=logging.DEBUG,
-        filemode="w+")  # I'm only interested in the last log of the day, so I just rewrite over the same file
+        filemode="w+")  # I'm only interested in the last log of the day, so I just overwrite over the same file
 
 
 if __name__ == '__main__':
@@ -75,3 +84,10 @@ if __name__ == '__main__':
                                      neat.DefaultStagnation, neat_config_file)
     pop = neat.population.Population(neat_config)
     best = pop.run(evolve, generations)
+
+    import matplotlib.pyplot as plt
+    plt.plot(fit_max)
+    plt.plot(fit_mean)
+    plt.legend(["Max fitness", "Mean fitness"])
+    plt.show()
+
