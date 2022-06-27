@@ -16,11 +16,11 @@ def evolve(genomes, config):
 
     # TODO create a configuration file to speedup testing
     steps = 500
-    width = 25
-    height = 25
+    width = 20
+    height = 20
     num_collectors = len(genomes)  # it might change from its predefined 20
-    num_resources = 25 * 5
-    num_gathering_points = 25
+    num_resources = 20 * 4
+    num_gathering_points = 10
 
     trials_for_agent = 1
 
@@ -79,7 +79,7 @@ def setup_logging():
 if __name__ == '__main__':
     setup_logging()
     neat_config_file = "src/config/NEAT.config"
-    generations = 200
+    generations = 50
     neat_config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet,
                                      neat.DefaultStagnation, neat_config_file)
     pop = neat.population.Population(neat_config)
