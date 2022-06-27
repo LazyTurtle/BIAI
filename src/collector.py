@@ -123,24 +123,24 @@ class Collector(Agent):
                 for x in np.linspace(min_x, max_x, n):
                     inputs.append((x, y, z))
 
-        # # the first hidden layer will be a 3x3x2 tensor
-        # min_z = -0.2
-        # max_z = 0.2
-        # hidden_layer_1 = list()
-        # for z in np.linspace(min_z, max_z, 2):
-        #     for y in np.linspace(max_y, min_y, n):
-        #         for x in np.linspace(min_x, max_x, n):
-        #             hidden_layer_1.append((x, y, z))
+        # the first hidden layer will be a 3x3x2 tensor
+        min_z = -0.2
+        max_z = 0.2
+        hidden_layer_1 = list()
+        for z in np.linspace(min_z, max_z, 2):
+            for y in np.linspace(max_y, min_y, n):
+                for x in np.linspace(min_x, max_x, n):
+                    hidden_layer_1.append((x, y, z))
 
-        # the second hidden layer will be a 3x3x3 tensor
-        min_z = -0.1
-        max_z = 0.5
+        # the second hidden layer will be a 3x3x2 tensor
+        min_z = 0.3
+        max_z = 0.7
         hidden_layer_2 = list()
-        for z in np.linspace(min_z, max_z, 3):
+        for z in np.linspace(min_z, max_z, 2):
             for y in np.linspace(max_y, min_y, n):
                 for x in np.linspace(min_x, max_x, n):
                     hidden_layer_2.append((x, y, z))
-        hidden_layers = [hidden_layer_2]#, hidden_layer_1]
+        hidden_layers = [hidden_layer_2, hidden_layer_1]
 
         min_z = 1
         max_z = 1
