@@ -18,11 +18,13 @@ class Collector(Agent):
 
         # data used during the evolution, to set up at each ResourceModel instantiation
         self.neural_network = None
+        self.genome = None
         self.resources = 0
         self.points = 0
 
-    def evolution_setup(self, neural_network):
+    def evolution_setup(self, neural_network, genome):
         self.neural_network = neural_network
+        self.genome = genome
         self.resources = 0
         self.points = 0
 
