@@ -22,6 +22,12 @@ class Collector(Agent):
         self.resources = 0
         self.points = 0
 
+    def step(self):
+        self.update_sensors()
+        action = self.get_action()
+        # logging.info(f"action chosen: {action}")
+        self.model.calculate_action_outcome(self, action)
+
     def evolution_setup(self, neural_network, genome):
         self.neural_network = neural_network
         self.genome = genome
@@ -29,7 +35,6 @@ class Collector(Agent):
         self.points = 0
 
     def get_action(self):
-        self.update_sensors()
         input_data = self.get_sensor_data()
         # logging.info(f"Collector {self.unique_id}")
         # logging.info("From sensors:")
@@ -43,7 +48,6 @@ class Collector(Agent):
         max_action = max(output)
         actions = [i for i, o in enumerate(output) if o == max_action]
         action = random.choice(actions)
-        # logging.info(f"action chosen: {action}")
         return action
 
     def update_sensors(self):
@@ -162,9 +166,6 @@ class Collector(Agent):
         x = dx + radius
         y = dy + radius
         return x, y
-
-    def step(self):
-        self.update_sensors()
 
     def portrayal(self):
         shape = {
