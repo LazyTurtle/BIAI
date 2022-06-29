@@ -1,10 +1,8 @@
 import math
-
-import numpy as np
 from mesa import Model, Agent
 from mesa.space import SingleGrid
 from .collector import Collector
-from .delegated_scheduler import DelegatedScheduler
+from mesa.time import BaseScheduler
 
 
 class ResourceModel(Model):
@@ -25,7 +23,7 @@ class ResourceModel(Model):
     def reset(self):
         self.grid = SingleGrid(self.width, self.height, True)
         self.n_agents = 0
-        self.schedule = DelegatedScheduler(self, self.agent_step)
+        self.schedule = BaseScheduler(self)
         self.fill_env(Collector, self.num_collectors)
         self.fill_env(GatheringPoint, self.num_gathering_points)
         self.fill_env(Resource, self.num_resources)
@@ -38,18 +36,8 @@ class ResourceModel(Model):
             self.grid.place_agent(agent, self.grid.find_empty())
 
     def step(self):
-        self.new_step_setup()
         self.schedule.step()
-        collectors = self.agents(Collector)
-        points = np.zeros(len(collectors))
-        for i in range(len(collectors)):
-            points[i] += collectors[i].points
-
-        return points, self.convergence()
-
-    def new_step_setup(self):
-        for agent in self.schedule.agents:
-            agent.points = 0
+        return self.convergence()
 
     def agent_step(self, agent):
         if type(agent) is not Collector:
@@ -71,7 +59,7 @@ class ResourceModel(Model):
 
         if self.grid.is_cell_empty(new_pos):
             self.grid.move_agent(agent, new_pos)
-            agent.points = 0
+
         else:
             current_agent = self.grid[new_pos[0], new_pos[1]]
 
@@ -80,21 +68,19 @@ class ResourceModel(Model):
                     agent.resources += 1
                     self.grid.remove_agent(current_agent)
                     self.grid.move_agent(agent, new_pos)
-                    agent.points = 1
-                else:
-                    agent.points = 0
+
+                    agent.points += 1
 
             # TODO introduce a way to gather more than one resource at a time
             if type(current_agent) is GatheringPoint:
                 if agent.resources > 0:
                     agent.resources = 0
-                    agent.points = 1
-                else:
-                    agent.points = 0
+
+                    agent.points += 1
 
             if type(current_agent) is Collector:
                 # for now, it's not planned to do anything in this case
-                agent.points = 0
+                pass
 
     # takes into account the toroidal space
     def relative_distances(self, agent_a, agent_b):
@@ -142,9 +128,6 @@ class Resource(Agent):
             "Layer": 0,
             "r": 0.5}
         return shape
-
-    def step(self) -> None:
-        pass
 
 
 class GatheringPoint(Agent):

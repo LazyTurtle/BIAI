@@ -31,7 +31,7 @@ def evolve(genomes, config):
     num_resources = 20 * 4
     num_gathering_points = 10
 
-    batch_size = 2
+    batch_size = 1
 
     assert num_collectors == len(
         genomes), f"The number of collectors ({num_collectors}) does not match the number of genomes ({len(genomes)})"
@@ -52,17 +52,14 @@ def evolve(genomes, config):
             # nn.reset()  # in case we do multiple trials we have to reset the rnn before each of one
             agent.evolution_setup(nn, genome)
 
-        rewards = np.zeros(batch_size)
         for i in range(steps):
-            points, has_converged = environment.step()
-            rewards += points
+            has_converged = environment.step()
             if has_converged:
                 break
 
-        batch_fitness = rewards * (steps / (i + 1))
-        for i in range(len(batch)):
-            genome_id, genome = batch[i]
-            genome.fitness = batch_fitness[i]
+        for agent in collectors:
+            agent.points = agent.points * (steps / (i + 1))
+            agent.genome.fitness = agent.points
 
     fitnesses = [g.fitness for _, g in genomes]
     max_fitness = max(fitnesses)
