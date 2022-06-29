@@ -9,8 +9,15 @@ from pureples.shared.substrate import Substrate
 
 fit_max = list()
 fit_mean = list()
-def evolve(genomes, config):
 
+
+def batches(list_to_batch, batch_size=1):
+    list_length = len(list_to_batch)
+    for index in range(0, list_length, batch_size):
+        yield list_to_batch[index:min(index + batch_size, list_length)]
+
+
+def evolve(genomes, config):
     # TODO glue together the code from pureples and mesa. the input is obtained by the agents and should be the list
     #  defined in input_coordinates, in that order
 
@@ -23,11 +30,12 @@ def evolve(genomes, config):
     num_gathering_points = 10
 
     trials_for_agent = 1
+    batch_size = 1
 
     assert num_collectors == len(
         genomes), f"The number of collectors ({num_collectors}) does not match the number of genomes ({len(genomes)})"
 
-    environment = ResourceModel(width, height, 1, num_resources, num_gathering_points)
+    environment = ResourceModel(width, height, batch_size, num_resources, num_gathering_points)
     input_coo, hidden_coo, output_coo = Collector.topology()
     substrate = Substrate(input_coo, output_coo, hidden_coo)
 
@@ -59,7 +67,7 @@ def evolve(genomes, config):
         # logging.info(f"Genome id {genome_id}, fitness: {genome.fitness}")
     fitnesses = [g.fitness for _, g in genomes]
     max_fitness = max(fitnesses)
-    mean_fitness = sum(fitnesses)/len(fitnesses)
+    mean_fitness = sum(fitnesses) / len(fitnesses)
     fit_max.append(max_fitness)
     fit_mean.append(mean_fitness)
     logging.info(f"Generation {len(fit_max)}")
@@ -86,8 +94,8 @@ if __name__ == '__main__':
     best = pop.run(evolve, generations)
 
     import matplotlib.pyplot as plt
+
     plt.plot(fit_max)
     plt.plot(fit_mean)
     plt.legend(["Max fitness", "Mean fitness"])
     plt.show()
-
