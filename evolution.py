@@ -1,6 +1,6 @@
-import math
 import logging
 from datetime import datetime
+import numpy as np
 from src.resource import ResourceModel
 from src.resource import Collector
 import neat
@@ -9,8 +9,17 @@ from pureples.shared.substrate import Substrate
 
 fit_max = list()
 fit_mean = list()
-def evolve(genomes, config):
 
+
+def batches(list_to_batch, batch_size=1):
+    list_length = len(list_to_batch)
+    for index in range(0, list_length, batch_size):
+        end_batch = min(index + batch_size, list_length)
+        # logging.info(f"Batch {index}-{end_batch}")
+        yield list_to_batch[index:end_batch]
+
+
+def evolve(genomes, config):
     # TODO glue together the code from pureples and mesa. the input is obtained by the agents and should be the list
     #  defined in input_coordinates, in that order
 
@@ -22,44 +31,42 @@ def evolve(genomes, config):
     num_resources = 20 * 4
     num_gathering_points = 10
 
-    trials_for_agent = 1
+    batch_size = 2
 
     assert num_collectors == len(
         genomes), f"The number of collectors ({num_collectors}) does not match the number of genomes ({len(genomes)})"
 
-    environment = ResourceModel(width, height, 1, num_resources, num_gathering_points)
     input_coo, hidden_coo, output_coo = Collector.topology()
     substrate = Substrate(input_coo, output_coo, hidden_coo)
 
-    for genome_id, genome in genomes:
-        # logging.info(f"Genome id: {genome_id}")
-        cppn = neat.nn.FeedForwardNetwork.create(genome, config)
-        nn = create_phenotype_network(cppn, substrate)
-        fitness = 0
+    for batch in batches(genomes, batch_size):
+        n_agents = len(batch)
+        environment = ResourceModel(width, height, n_agents, num_resources, num_gathering_points)
+        collectors = environment.agents(Collector)
 
-        for t in range(trials_for_agent):
-            environment.reset()
-            nn.reset()
-            collector = environment.agents(Collector)[0]
-            collector.evolution_setup(nn)
-            reward = 0
+        for i in range(len(batch)):
+            genome_id, genome = batch[i]
+            cppn = neat.nn.FeedForwardNetwork.create(genome, config)
+            nn = create_phenotype_network(cppn, substrate)
+            agent = collectors[i]
+            # nn.reset()  # in case we do multiple trials we have to reset the rnn before each of one
+            agent.evolution_setup(nn, genome)
 
-            for i in range(steps):
-                points, has_converged = environment.step()
-                reward += points
-                if has_converged:
-                    break
+        rewards = np.zeros(batch_size)
+        for i in range(steps):
+            points, has_converged = environment.step()
+            rewards += points
+            if has_converged:
+                break
 
-            # logging.info(f"Reward for trial {t}: {reward}")
-            # logging.info(f"Converged in {i + 1} steps")
+        batch_fitness = rewards * (steps / (i + 1))
+        for i in range(len(batch)):
+            genome_id, genome = batch[i]
+            genome.fitness = batch_fitness[i]
 
-            fitness += reward / math.sqrt((i + 1) / steps)
-
-        genome.fitness = fitness[0]
-        # logging.info(f"Genome id {genome_id}, fitness: {genome.fitness}")
     fitnesses = [g.fitness for _, g in genomes]
     max_fitness = max(fitnesses)
-    mean_fitness = sum(fitnesses)/len(fitnesses)
+    mean_fitness = sum(fitnesses) / len(fitnesses)
     fit_max.append(max_fitness)
     fit_mean.append(mean_fitness)
     logging.info(f"Generation {len(fit_max)}")
@@ -86,8 +93,8 @@ if __name__ == '__main__':
     best = pop.run(evolve, generations)
 
     import matplotlib.pyplot as plt
+
     plt.plot(fit_max)
     plt.plot(fit_mean)
     plt.legend(["Max fitness", "Mean fitness"])
     plt.show()
-
