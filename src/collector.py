@@ -123,6 +123,7 @@ class Collector(Agent):
         max_z = -0.4
 
         # for the inputs we have a 3x3 matrix for each sensor, and each sensor is a channel
+        # resulting in a 3x3x3 input tensor
         inputs = list()
         for z in np.linspace(min_z, max_z, 3):
             for y in np.linspace(max_y, min_y, n):  # max to min to mirror how np arrange x and y coordinates

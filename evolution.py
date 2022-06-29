@@ -10,14 +10,6 @@ fit_max = list()
 fit_mean = list()
 
 
-def batches(list_to_batch, batch_size=1):
-    list_length = len(list_to_batch)
-    for index in range(0, list_length, batch_size):
-        end_batch = min(index + batch_size, list_length)
-        # logging.info(f"Batch {index}-{end_batch}")
-        yield list_to_batch[index:end_batch]
-
-
 def evolve(genomes, config):
     # TODO glue together the code from pureples and mesa. the input is obtained by the agents and should be the list
     #  defined in input_coordinates, in that order
@@ -26,14 +18,10 @@ def evolve(genomes, config):
     steps = 500
     width = 20
     height = 20
-    num_collectors = len(genomes)  # it might change from its predefined 20
     num_resources = 20 * 4
     num_gathering_points = 10
 
     batch_size = 1
-
-    assert num_collectors == len(
-        genomes), f"The number of collectors ({num_collectors}) does not match the number of genomes ({len(genomes)})"
 
     input_coo, hidden_coo, output_coo = Collector.topology()
     substrate = Substrate(input_coo, output_coo, hidden_coo)
@@ -70,6 +58,14 @@ def evolve(genomes, config):
     logging.info(f"Generation {len(fit_max)}")
     logging.info(f"Mean fitness: {mean_fitness}")
     logging.info(f"Max fitness: {max_fitness}")
+
+
+def batches(list_to_batch, batch_size=1):
+    list_length = len(list_to_batch)
+    for index in range(0, list_length, batch_size):
+        end_batch = min(index + batch_size, list_length)
+        # logging.info(f"Batch {index}-{end_batch}")
+        yield list_to_batch[index:end_batch]
 
 
 def setup_logging():
