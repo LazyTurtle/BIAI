@@ -2,7 +2,7 @@ import math
 from mesa import Model, Agent
 from mesa.space import SingleGrid
 from .collector import Collector
-from mesa.time import BaseScheduler
+from tag_scheduler import TagScheduler
 
 
 class ResourceModel(Model):
@@ -23,7 +23,7 @@ class ResourceModel(Model):
     def reset(self):
         self.grid = SingleGrid(self.width, self.height, True)
         self.n_agents = 0
-        self.schedule = BaseScheduler(self)
+        self.schedule = TagScheduler(self)
         self.fill_env(Collector, self.num_collectors)
         self.fill_env(GatheringPoint, self.num_gathering_points)
         self.fill_env(Resource, self.num_resources)
@@ -32,20 +32,14 @@ class ResourceModel(Model):
         for i in range(n):
             agent = agent_cl(self.n_agents, self)
             self.n_agents += 1
-            self.schedule.add(agent)
+            self.schedule.add(agent, agent_cl)
             self.grid.place_agent(agent, self.grid.find_empty())
 
-    def step(self):
-        self.schedule.step()
-        return self.convergence()
-
-    def agent_step(self, agent):
-        if type(agent) is not Collector:
-            agent.step()
-            return
-
-        action = agent.get_action()
-        self.calculate_action_outcome(agent, action)
+    def step(self) -> bool:
+        # for the moment we only need for collectors to make steps, not all agents
+        self.schedule.step(Collector)
+        has_converged = self.convergence()
+        return has_converged
 
     def calculate_action_outcome(self, agent, action):
         # get the new absolute position
@@ -147,6 +141,3 @@ class GatheringPoint(Agent):
             "h": 1
         }
         return shape
-
-    def step(self) -> None:
-        pass
