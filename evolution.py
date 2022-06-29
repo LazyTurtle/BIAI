@@ -1,6 +1,5 @@
 import logging
 from datetime import datetime
-import numpy as np
 from src.resource import ResourceModel
 from src.resource import Collector
 import neat
@@ -52,13 +51,15 @@ def evolve(genomes, config):
             # nn.reset()  # in case we do multiple trials we have to reset the rnn before each of one
             agent.evolution_setup(nn, genome)
 
+        steps_used = 0
         for i in range(steps):
             has_converged = environment.step()
+            steps_used = i + 1
             if has_converged:
                 break
 
         for agent in collectors:
-            agent.points = agent.points * (steps / (i + 1))
+            agent.points = agent.points * (steps / steps_used)
             agent.genome.fitness = agent.points
 
     fitnesses = [g.fitness for _, g in genomes]

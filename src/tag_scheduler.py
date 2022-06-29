@@ -11,7 +11,7 @@ class TagScheduler(BaseScheduler):
         super(TagScheduler, self).add(agent)
         if tag is not None:
             if tag in self.tagged_agents.keys():
-                self.tagged_agents[tag].add(agent)
+                self.tagged_agents[tag].append(agent)
             else:
                 self.tagged_agents[tag] = [agent]
 

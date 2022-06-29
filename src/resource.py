@@ -2,7 +2,7 @@ import math
 from mesa import Model, Agent
 from mesa.space import SingleGrid
 from .collector import Collector
-from tag_scheduler import TagScheduler
+from .tag_scheduler import TagScheduler
 
 
 class ResourceModel(Model):
