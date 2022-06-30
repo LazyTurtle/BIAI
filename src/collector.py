@@ -119,40 +119,40 @@ class Collector(Agent):
         min_y = -1
         max_y = 1
 
-        min_z = -1
-        max_z = -0.4
+        max_z = 1
+        min_z = 0.6
 
         # for the inputs we have a 3x3 matrix for each sensor, and each sensor is a channel
         # resulting in a 3x3x3 input tensor
         inputs = list()
-        for z in np.linspace(min_z, max_z, 3):
+        for z in np.linspace(max_z, min_z, 3):
             for y in np.linspace(max_y, min_y, n):  # max to min to mirror how np arrange x and y coordinates
                 for x in np.linspace(min_x, max_x, n):
                     inputs.append((x, y, z))
 
-        # the first hidden layer will be a 3x3x2 tensor
-        min_z = -0.2
-        max_z = 0.2
+        # the first hidden layer will be a 3x3x3 tensor
+        max_z = 0.3
+        min_z = 0.0
         hidden_layer_1 = list()
-        for z in np.linspace(min_z, max_z, 2):
+        for z in np.linspace(max_z, min_z, 3):
             for y in np.linspace(max_y, min_y, n):
                 for x in np.linspace(min_x, max_x, n):
                     hidden_layer_1.append((x, y, z))
 
         # the second hidden layer will be a 3x3x2 tensor
-        min_z = 0.3
-        max_z = 0.7
+        max_z = -0.2
+        min_z = -0.4
         hidden_layer_2 = list()
-        for z in np.linspace(min_z, max_z, 2):
+        for z in np.linspace(max_z, min_z, 2):
             for y in np.linspace(max_y, min_y, n):
                 for x in np.linspace(min_x, max_x, n):
                     hidden_layer_2.append((x, y, z))
-        hidden_layers = [hidden_layer_2, hidden_layer_1]
+        hidden_layers = [hidden_layer_1, hidden_layer_2]
 
-        min_z = 1
-        max_z = 1
+        max_z = -1
+        min_z = -1
         output = list()
-        for z in np.linspace(min_z, max_z, 1):
+        for z in np.linspace(max_z, min_z, 1):
             for y in np.linspace(max_y, min_y, n):
                 for x in np.linspace(min_x, max_x, n):
                     output.append((x, y, z))
