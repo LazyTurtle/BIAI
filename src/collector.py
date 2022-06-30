@@ -44,10 +44,13 @@ class Collector(Agent):
         input_data = input_data.flatten()
         output = self.neural_network.activate(input_data)
         # logging.info(f"output activations: {output}")
-        # in case multiple actions have the same maximum value, often the case at the start
-        max_action = max(output)
-        actions = [i for i, o in enumerate(output) if o == max_action]
-        action = random.choice(actions)
+        prob_mass = sum(output)
+        action = None
+        if prob_mass == 0.:
+            action = random.choice(range(9))
+        else:
+            action = np.random.choice(range(9), p=(output/prob_mass))
+
         return action
 
     def update_sensors(self):
