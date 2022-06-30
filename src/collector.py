@@ -49,7 +49,8 @@ class Collector(Agent):
         if prob_mass == 0.:
             action = random.choice(range(9))
         else:
-            action = np.random.choice(range(9), p=(output/prob_mass))
+            prob = np.array(output)/prob_mass
+            action = np.random.choice(range(9), p=prob)
 
         return action
 
