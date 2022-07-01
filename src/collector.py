@@ -15,12 +15,13 @@ class Collector(Agent):
         self.vision_distance = vision_distance
         self.resources_vision = None
         self.gathering_vision = None
+        self.carrying_resource = np.zeros((3,3))
 
         # data used during the evolution, to set up at each ResourceModel instantiation
         self.neural_network = None
         self.genome = None
         self.resources = 0
-        self.points = 0
+        self.points = 10    # start with some points (agent can roam around a bit)
 
     def step(self):
         self.update_sensors()
@@ -54,6 +55,7 @@ class Collector(Agent):
         self.update_proximity()
         self.update_resource_vision()
         self.update_gathering_vision()
+        self.update_resource_carrying_sensor()
 
     def update_proximity(self):
         # reset, 1 means that you can move freely there
@@ -84,6 +86,12 @@ class Collector(Agent):
     def update_gathering_vision(self):
         def gathering_check(agent): return type(agent) == src.resource.GatheringPoint
         self.gathering_vision = self.selective_vision(self.vision_distance, gathering_check)
+
+    def update_resource_carrying_sensor(self):
+        if self.resources > 0 :
+            self.carrying_resource = np.ones((3,3))
+        else :
+            self.carrying_resource = np.zeros((3,3))
 
     # is_visible should be a function that returns True if the argument is something that we want to see
     def selective_vision(self, vision_range, is_visible):
@@ -125,7 +133,7 @@ class Collector(Agent):
         # for the inputs we have a 3x3 matrix for each sensor, and each sensor is a channel
         # resulting in a 3x3x3 input tensor
         inputs = list()
-        for z in np.linspace(min_z, max_z, 3):
+        for z in np.linspace(min_z, max_z, 4):
             for y in np.linspace(max_y, min_y, n):  # max to min to mirror how np arrange x and y coordinates
                 for x in np.linspace(min_x, max_x, n):
                     inputs.append((x, y, z))
@@ -180,4 +188,4 @@ class Collector(Agent):
         return shape
 
     def get_sensor_data(self):
-        return np.array((self.proximity, self.resources_vision, self.gathering_vision))
+        return np.array((self.proximity, self.resources_vision, self.gathering_vision,self.carrying_resource))
