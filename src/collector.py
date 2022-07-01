@@ -1,8 +1,7 @@
 import random
-
 from mesa import Agent
 import numpy as np
-import source.resource
+import src.resource
 import math
 
 
@@ -14,61 +13,72 @@ class Collector(Agent):
         self.prox_shape = (self.proximity_distance * 2 + 1, self.proximity_distance * 2 + 1)
         self.proximity = np.zeros(self.prox_shape)
         self.vision_distance = vision_distance
-        self.vision = np.zeros((3, 3))
-        self.resource_sensor = np.zeros((3, 3))
+        self.resources_vision = None
+        self.gathering_vision = None
 
-        # data used during the evolution, to setup at each ResourceModel instantiation
+        # data used during the evolution, to set up at each ResourceModel instantiation
         self.neural_network = None
-        self.debug = False
+        self.activations = None
+        self.genome = None
         self.resources = 0
         self.points = 0
 
-    def evolution_setup(self, neural_network):
+    def step(self):
+        self.update_sensors()
+        action = self.get_action()
+        # logging.info(f"action chosen: {action}")
+        self.model.calculate_action_outcome(self, action)
+
+    def evolution_setup(self, neural_network, genome):
         self.neural_network = neural_network
+        self.genome = genome
+        i, h, o = self.topology()
+        self.activations = len(h) + 2
         self.resources = 0
         self.points = 0
 
     def get_action(self):
-        self.update_sensors()
         input_data = self.get_sensor_data()
+        # logging.info(f"Collector {self.unique_id}")
+        # logging.info("From sensors:")
+        # logging.info(input_data)
         # The inputs are flattened in order to both have a list (required by neat) and to follow the order defined
         # by the coordinates of hyper neat
         input_data = input_data.flatten()
-        output = self.neural_network.activate(input_data)
-        # in case multiple actions have the same maximum value, possible at the start
-        max_action = max(output)
-        actions = [i for i, o in enumerate(output) if o == max_action]
-        action = random.choice(actions)
-        if self.debug:
-            print("Input data")
-            self.log()
-            a = np.array(output)
-            a = a.reshape((3, 3))
-            print("Output")
-            print(a)
-            print(f"Action taken: {action}")
+        output = None
+        for _ in range(self.activations):
+            output = self.neural_network.activate(input_data)
+        # logging.info(f"output activations: {output}")
+        prob_mass = sum(output)
+        action = None
+        if prob_mass == 0.:
+            action = random.choice(range(9))
+        else:
+            prob = np.array(output)/prob_mass
+            action = np.random.choice(range(9), p=prob)
+
         return action
 
     def update_sensors(self):
-        self.update_proximity_information()
-        self.update_vision_information()
-        self.update_resource_sensor()
+        self.update_proximity()
+        self.update_resource_vision()
+        self.update_gathering_vision()
 
-    def update_proximity_information(self):
+    def update_proximity(self):
         # reset, 1 means that you can move freely there
         self.proximity.fill(1)
         neighbours = self.model.grid.get_neighbors(
             self.pos, moore=True, include_center=False, radius=self.proximity_distance)
 
-        self.proximity[self.proximity_distance, self.proximity_distance] = 0
+        self.proximity[self.proximity_distance, self.proximity_distance] = 0 if self.resources == 0 else 1
         for agent in neighbours:
             j, i = self.array_indexes(agent, self.proximity_distance)
 
             if type(agent) is Collector:
                 self.proximity[i, j] = 0
-            if type(agent) is source.resource.GatheringPoint:
+            if type(agent) is src.resource.GatheringPoint:
                 self.proximity[i, j] = 0.25
-            if type(agent) is source.resource.Resource:
+            if type(agent) is src.resource.Resource:
                 self.proximity[i, j] = 0.50
 
         # the browser grid cells are indexed by [x][y]
@@ -76,38 +86,38 @@ class Collector(Agent):
         # it's the opposite vertical representation of numpy
         self.proximity = np.flip(self.proximity, 0)
 
-    def update_vision_information(self):
+    def update_resource_vision(self):
+        def resource_check(agent): return type(agent) == src.resource.Resource
+        self.resources_vision = self.selective_vision(self.vision_distance, resource_check)
 
-        self.vision.fill(0)
-        neighbours = self.model.grid.get_neighbors(
-            self.pos, moore=True, include_center=False, radius=self.vision_distance)
+    def update_gathering_vision(self):
+        def gathering_check(agent): return type(agent) == src.resource.GatheringPoint
+        self.gathering_vision = self.selective_vision(self.vision_distance, gathering_check)
+
+    # is_visible should be a function that returns True if the argument is something that we want to see
+    def selective_vision(self, vision_range, is_visible):
+        vision = np.zeros((3, 3))
+
+        neighbours = self.model.grid.get_neighbors(self.pos, moore=True, include_center=True, radius=vision_range)
         for agent in neighbours:
-            if type(agent) is not source.resource.Resource:
+            if not is_visible(agent):
                 continue
 
             x, y, distance = self.model.relative_distances(self, agent)
             max_env_distance = max(self.model.grid.width, self.model.grid.height)
-            food_distance = 1 - (distance / max_env_distance)
+            agent_distance = 1 - (distance / max_env_distance)
             bearings = math.atan2(y, x)
             mx = math.cos(bearings)
             my = math.sin(bearings)
             rx = round(mx)
             ry = round(my)
-            i = ry + int(self.vision.shape[0] / 2)
-            j = rx + int(self.vision.shape[0] / 2)
-            self.vision[i, j] += food_distance
-        self.vision = np.flip(self.vision, 0)
-        self.vision = self.vision.clip(0, 1)
+            i = ry + int(vision.shape[0] / 2)
+            j = rx + int(vision.shape[0] / 2)
+            vision[i, j] += agent_distance
 
-    def update_resource_sensor(self):
-        self.resource_sensor.fill(0)
-        neighbors = self.model.grid.get_neighbors(self.pos, moore=True, include_center=True, radius=1)
-        for agent in neighbors:
-            if hasattr(agent, 'resources'):
-                n_resources = agent.resources
-                j, i = self.array_indexes(agent, 1)
-                self.resource_sensor[i, j] = n_resources
-        self.resource_sensor = np.flip(self.resource_sensor, 0)
+        vision = np.flip(vision, 0)  # np and mesa y-axis are opposite to each other
+        vision = vision.clip(0, 1)
+        return vision
 
     @staticmethod
     def topology():
@@ -118,39 +128,40 @@ class Collector(Agent):
         min_y = -1
         max_y = 1
 
-        min_z = -1
-        max_z = -0.4
+        max_z = 1
+        min_z = 0.6
 
         # for the inputs we have a 3x3 matrix for each sensor, and each sensor is a channel
+        # resulting in a 3x3x3 input tensor
         inputs = list()
-        for z in np.linspace(min_z, max_z, 3):
+        for z in np.linspace(max_z, min_z, 3):
             for y in np.linspace(max_y, min_y, n):  # max to min to mirror how np arrange x and y coordinates
                 for x in np.linspace(min_x, max_x, n):
                     inputs.append((x, y, z))
 
         # the first hidden layer will be a 3x3x3 tensor
-        min_z = -0.3
         max_z = 0.3
+        min_z = 0.0
         hidden_layer_1 = list()
-        for z in np.linspace(min_z, max_z, 3):
+        for z in np.linspace(max_z, min_z, 3):
             for y in np.linspace(max_y, min_y, n):
                 for x in np.linspace(min_x, max_x, n):
                     hidden_layer_1.append((x, y, z))
 
         # the second hidden layer will be a 3x3x2 tensor
-        min_z = 0.4
-        max_z = 0.8
+        max_z = -0.2
+        min_z = -0.4
         hidden_layer_2 = list()
-        for z in np.linspace(min_z, max_z, 2):
+        for z in np.linspace(max_z, min_z, 2):
             for y in np.linspace(max_y, min_y, n):
                 for x in np.linspace(min_x, max_x, n):
                     hidden_layer_2.append((x, y, z))
-        hidden_layers = [hidden_layer_2, hidden_layer_1]
+        hidden_layers = [hidden_layer_1, hidden_layer_2]
 
-        min_z = 1
-        max_z = 1
+        max_z = -1
+        min_z = -1
         output = list()
-        for z in np.linspace(min_z, max_z, 1):
+        for z in np.linspace(max_z, min_z, 1):
             for y in np.linspace(max_y, min_y, n):
                 for x in np.linspace(min_x, max_x, n):
                     output.append((x, y, z))
@@ -166,9 +177,6 @@ class Collector(Agent):
         y = dy + radius
         return x, y
 
-    def step(self) -> None:
-        self.update_sensors()
-
     def portrayal(self):
         shape = {
             "text": f"id:{self.unique_id}",
@@ -181,10 +189,4 @@ class Collector(Agent):
         return shape
 
     def get_sensor_data(self):
-        return np.array((self.proximity, self.vision, self.resource_sensor))
-
-    def log(self):
-        print(f"id:{self.unique_id}")
-        print(self.proximity)
-        print(self.vision)
-        print(self.resource_sensor)
+        return np.array((self.proximity, self.resources_vision, self.gathering_vision))

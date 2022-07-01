@@ -133,8 +133,8 @@ report-latex/*.fls
 report-latex/report.synctex.gz
 report-latex/*.pdf
 
-# pureples folder
-# pureples
+# logs folder
+logs
 
 # .idea folder from pycharm
 .idea/*
