@@ -41,6 +41,7 @@ class MoneyModel(Model):
     """A model with some number of agents."""
 
     def __init__(self, N, width, height):
+        print("new model")
         self.num_agents = N
         self.grid = MultiGrid(width, height, True)
         self.schedule = RandomActivation(self)
