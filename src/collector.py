@@ -7,7 +7,7 @@ import math
 
 class Collector(Agent):
 
-    def __init__(self, unique_id, model, proximity_distance=1, vision_distance=10):
+    def __init__(self, unique_id, model, proximity_distance=1, vision_distance=3):
         super(Collector, self).__init__(unique_id, model)
         self.proximity_distance = proximity_distance
         self.prox_shape = (self.proximity_distance * 2 + 1, self.proximity_distance * 2 + 1)

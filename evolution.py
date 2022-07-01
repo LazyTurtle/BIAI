@@ -15,10 +15,10 @@ def evolve(genomes, config):
     #  defined in input_coordinates, in that order
 
     # TODO create a configuration file to speedup testing
-    steps = 300
+    steps = 200
     width = 20
     height = 20
-    num_resources = 20 * 4
+    num_resources = 20 * 3
     num_gathering_points = 10
 
     batch_size = 1
