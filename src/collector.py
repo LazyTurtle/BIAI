@@ -18,6 +18,7 @@ class Collector(Agent):
 
         # data used during the evolution, to set up at each ResourceModel instantiation
         self.neural_network = None
+        self.activations = None
         self.genome = None
         self.resources = 0
         self.points = 0
@@ -31,6 +32,8 @@ class Collector(Agent):
     def evolution_setup(self, neural_network, genome):
         self.neural_network = neural_network
         self.genome = genome
+        i, h, o = self.topology()
+        self.activations = len(h) + 2
         self.resources = 0
         self.points = 0
 
@@ -42,7 +45,9 @@ class Collector(Agent):
         # The inputs are flattened in order to both have a list (required by neat) and to follow the order defined
         # by the coordinates of hyper neat
         input_data = input_data.flatten()
-        output = self.neural_network.activate(input_data)
+        output = None
+        for _ in range(self.activations):
+            output = self.neural_network.activate(input_data)
         # logging.info(f"output activations: {output}")
         prob_mass = sum(output)
         action = None
