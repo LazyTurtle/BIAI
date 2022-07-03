@@ -186,12 +186,14 @@ class Collector(Agent):
         return x, y
 
     def portrayal(self):
+        # The documentation is wrong once again
+        # Filled doesn't use str "true"/"false" but the python True or False boolean
         shape = {
             # "text": f"id:{self.unique_id}",
             "text_color": "black",
             "Shape": "circle",
             "Color": "red",
-            "Filled": "true" if self.resources > 0 else "false",
+            "Filled": False if self.resources == 0 else True,
             "Layer": 0,
             "r": 0.5}
         return shape

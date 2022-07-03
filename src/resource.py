@@ -130,7 +130,7 @@ class Resource(Agent):
             "text_color": "black",
             "Shape": "circle",
             "Color": "green",
-            "Filled": "true",
+            "Filled": True,
             "Layer": 0,
             "r": 0.5}
         return shape
@@ -147,7 +147,7 @@ class GatheringPoint(Agent):
             "text_color": "white",
             "Shape": "rect",
             "Color": "black",
-            "Filled": "true",
+            "Filled": True,
             "Layer": 0,
             "w": 1,
             "h": 1
