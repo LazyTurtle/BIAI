@@ -1,13 +1,15 @@
 import random
-from mesa import Agent
-import numpy as np
 import src.resource
 import math
+import logging
+import numpy as np
+
+from mesa import Agent
 
 
 class Collector(Agent):
 
-    def __init__(self, unique_id, model, proximity_distance=1, vision_distance=3):
+    def __init__(self, unique_id, model, proximity_distance=1, vision_distance=3, debug=False):
         super(Collector, self).__init__(unique_id, model)
         self.proximity_distance = proximity_distance
         self.prox_shape = (self.proximity_distance * 2 + 1, self.proximity_distance * 2 + 1)
@@ -15,6 +17,7 @@ class Collector(Agent):
         self.vision_distance = vision_distance
         self.resources_vision = None
         self.gathering_vision = None
+        self.debug = debug
 
         # data used during the evolution, to set up at each ResourceModel instantiation
         self.neural_network = None
@@ -26,7 +29,8 @@ class Collector(Agent):
     def step(self):
         self.update_sensors()
         action = self.get_action()
-        # logging.info(f"action chosen: {action}")
+        if self.debug:
+            logging.info(f"action chosen: {action}")
         self.model.calculate_action_outcome(self, action)
 
     def evolution_setup(self, neural_network, genome):
@@ -39,22 +43,24 @@ class Collector(Agent):
 
     def get_action(self):
         input_data = self.get_sensor_data()
-        # logging.info(f"Collector {self.unique_id}")
-        # logging.info("From sensors:")
-        # logging.info(input_data)
+        if self.debug:
+            logging.info(f"Collector {self.unique_id}")
+            logging.info("From sensors:")
+            logging.info(f"\n{input_data}")
         # The inputs are flattened in order to both have a list (required by neat) and to follow the order defined
         # by the coordinates of hyper neat
         input_data = input_data.flatten()
         output = None
         for _ in range(self.activations):
             output = self.neural_network.activate(input_data)
-        # logging.info(f"output activations: {output}")
+        if self.debug:
+            logging.info(f"output activations: {output}")
         prob_mass = sum(output)
         action = None
         if prob_mass == 0.:
             action = random.choice(range(9))
         else:
-            prob = np.array(output)/prob_mass
+            prob = np.array(output) / prob_mass
             action = np.random.choice(range(9), p=prob)
 
         return action
@@ -88,10 +94,12 @@ class Collector(Agent):
 
     def update_resource_vision(self):
         def resource_check(agent): return type(agent) == src.resource.Resource
+
         self.resources_vision = self.selective_vision(self.vision_distance, resource_check)
 
     def update_gathering_vision(self):
         def gathering_check(agent): return type(agent) == src.resource.GatheringPoint
+
         self.gathering_vision = self.selective_vision(self.vision_distance, gathering_check)
 
     # is_visible should be a function that returns True if the argument is something that we want to see
@@ -179,11 +187,11 @@ class Collector(Agent):
 
     def portrayal(self):
         shape = {
-            "text": f"id:{self.unique_id}",
+            # "text": f"id:{self.unique_id}",
             "text_color": "black",
             "Shape": "circle",
             "Color": "red",
-            "Filled": "true",
+            "Filled": "true" if self.resources > 0 else "false",
             "Layer": 0,
             "r": 0.5}
         return shape

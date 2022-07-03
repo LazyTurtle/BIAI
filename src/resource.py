@@ -1,4 +1,5 @@
 import math
+import typing
 from mesa import Model, Agent
 from mesa.space import SingleGrid
 from .collector import Collector
@@ -7,7 +8,7 @@ from .tag_scheduler import TagScheduler
 
 class ResourceModel(Model):
 
-    def __init__(self, width, height, num_collectors, num_resources, num_gathering_points=1):
+    def __init__(self, width, height, num_collectors: typing.Union[int, list[Collector]], num_resources, num_gathering_points, debug=False):
         super().__init__()
         self.grid = None
         self.width = width
@@ -18,6 +19,7 @@ class ResourceModel(Model):
         self.running = True
         self.schedule = None
         self.n_agents = 0
+        self.debug = debug
         self.reset()
 
     def reset(self):
@@ -29,11 +31,21 @@ class ResourceModel(Model):
         self.fill_env(Resource, self.num_resources)
 
     def fill_env(self, agent_cl, n):
-        for i in range(n):
-            agent = agent_cl(self.n_agents, self)
-            self.n_agents += 1
-            self.schedule.add(agent, agent_cl)
-            self.grid.place_agent(agent, self.grid.find_empty())
+        if type(n) is int:
+            for i in range(n):
+                agent = agent_cl(self.n_agents, self)
+                self.n_agents += 1
+                self.schedule.add(agent, agent_cl)
+                self.grid.place_agent(agent, self.grid.find_empty())
+
+        elif type(n) is list:
+            for a in n:
+                a.unique_id = self.n_agents
+                a.model = self
+                self.n_agents += 1
+                self.schedule.add(a, agent_cl)
+                self.grid.place_agent(a, self.grid.find_empty())
+
 
     def step(self) -> bool:
         # for the moment we only need for collectors to make steps, not all agents
@@ -114,7 +126,7 @@ class Resource(Agent):
 
     def portrayal(self):
         shape = {
-            "text": f"id:{self.unique_id}",
+            # "text": f"id:{self.unique_id}",
             "text_color": "black",
             "Shape": "circle",
             "Color": "green",
@@ -131,7 +143,7 @@ class GatheringPoint(Agent):
 
     def portrayal(self):
         shape = {
-            "text": f"id:{self.unique_id}",
+            # "text": f"id:{self.unique_id}",
             "text_color": "white",
             "Shape": "rect",
             "Color": "black",

@@ -1,34 +1,33 @@
 import logging
+import neat
+import os
 from datetime import datetime
 from src.resource import ResourceModel
 from src.resource import Collector
-import neat
 from pureples.hyperneat.hyperneat import create_phenotype_network
 from pureples.shared.substrate import Substrate
 
 fit_max = list()
 fit_mean = list()
 
+NEAT_CONFIG_FILE_PATH = "config/NEAT.config"
+
+GENERATIONS = 2
+STEPS = 200
+WIDTH = 20
+HEIGHT = 20
+NUM_RESOURCES = 20 * 3
+NUM_GATHERING_POINTS = 10
+BATCH_SIZE = 1
+
 
 def evolve(genomes, config):
-    # TODO glue together the code from pureples and mesa. the input is obtained by the agents and should be the list
-    #  defined in input_coordinates, in that order
-
-    # TODO create a configuration file to speedup testing
-    steps = 200
-    width = 20
-    height = 20
-    num_resources = 20 * 3
-    num_gathering_points = 10
-
-    batch_size = 1
-
     input_coo, hidden_coo, output_coo = Collector.topology()
     substrate = Substrate(input_coo, output_coo, hidden_coo)
 
-    for batch in batches(genomes, batch_size):
+    for batch in batches(genomes, BATCH_SIZE):
         n_agents = len(batch)
-        environment = ResourceModel(width, height, n_agents, num_resources, num_gathering_points)
+        environment = ResourceModel(WIDTH, HEIGHT, n_agents, NUM_RESOURCES, NUM_GATHERING_POINTS)
         collectors = environment.agents(Collector)
 
         for i in range(len(batch)):
@@ -40,15 +39,14 @@ def evolve(genomes, config):
             agent.evolution_setup(nn, genome)
 
         steps_used = 0
-        for i in range(steps):
+        for i in range(STEPS):
             has_converged = environment.step()
             steps_used = i + 1
             if has_converged:
                 break
 
         for agent in collectors:
-            agent.points = agent.points * (steps / steps_used)
-            agent.genome.fitness = agent.points
+            agent.genome.fitness = agent.points * (STEPS / steps_used)
 
     fitnesses = [g.fitness for _, g in genomes]
     max_fitness = max(fitnesses)
@@ -77,14 +75,19 @@ def setup_logging():
         filemode="w+")  # I'm only interested in the last log of the day, so I just overwrite over the same file
 
 
-if __name__ == '__main__':
-    setup_logging()
-    neat_config_file = "src/config/NEAT.config"
-    generations = 50
+def best_agent():
+    cwd = os.getcwd()
+    neat_config_file = os.path.join(cwd, NEAT_CONFIG_FILE_PATH)
     neat_config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet,
                                      neat.DefaultStagnation, neat_config_file)
     pop = neat.population.Population(neat_config)
-    best = pop.run(evolve, generations)
+    best = pop.run(evolve, GENERATIONS)
+    return best
+
+
+if __name__ == '__main__':
+    setup_logging()
+    best_agent()
 
     import matplotlib.pyplot as plt
 
