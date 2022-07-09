@@ -12,12 +12,12 @@ fit_mean = list()
 
 NEAT_CONFIG_FILE_PATH = "config/NEAT.config"
 
-GENERATIONS = 2
+GENERATIONS = 50
 STEPS = 200
 WIDTH = 20
 HEIGHT = 20
-NUM_RESOURCES = 20 * 3
-NUM_GATHERING_POINTS = 10
+NUM_RESOURCES = 20
+NUM_GATHERING_POINTS = 1
 BATCH_SIZE = 1
 
 
@@ -82,12 +82,6 @@ def best_agent():
                                      neat.DefaultStagnation, neat_config_file)
     pop = neat.population.Population(neat_config)
     best = pop.run(evolve, GENERATIONS)
-    return best
-
-
-if __name__ == '__main__':
-    setup_logging()
-    best_agent()
 
     import matplotlib.pyplot as plt
 
@@ -95,3 +89,10 @@ if __name__ == '__main__':
     plt.plot(fit_mean)
     plt.legend(["Max fitness", "Mean fitness"])
     plt.show()
+    return best
+
+
+if __name__ == '__main__':
+    setup_logging()
+    best_agent()
+

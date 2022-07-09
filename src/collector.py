@@ -9,12 +9,13 @@ from mesa import Agent
 
 class Collector(Agent):
 
-    def __init__(self, unique_id, model, proximity_distance=1, vision_distance=3, debug=False):
+    def __init__(self, unique_id, model, proximity_distance=1, vision_distance=4, debug=False):
         super(Collector, self).__init__(unique_id, model)
         self.proximity_distance = proximity_distance
         self.prox_shape = (self.proximity_distance * 2 + 1, self.proximity_distance * 2 + 1)
         self.proximity = np.zeros(self.prox_shape)
-        self.vision_distance = vision_distance
+        self.resources_vision_distance = vision_distance
+        self.gathering_points_vision_distance = 10
         self.resources_vision = None
         self.gathering_vision = None
         self.debug = debug
@@ -95,12 +96,12 @@ class Collector(Agent):
     def update_resource_vision(self):
         def resource_check(agent): return type(agent) == src.resource.Resource
 
-        self.resources_vision = self.selective_vision(self.vision_distance, resource_check)
+        self.resources_vision = self.selective_vision(self.resources_vision_distance, resource_check)
 
     def update_gathering_vision(self):
         def gathering_check(agent): return type(agent) == src.resource.GatheringPoint
 
-        self.gathering_vision = self.selective_vision(self.vision_distance, gathering_check)
+        self.gathering_vision = self.selective_vision(self.gathering_points_vision_distance, gathering_check)
 
     # is_visible should be a function that returns True if the argument is something that we want to see
     def selective_vision(self, vision_range, is_visible):
@@ -137,7 +138,7 @@ class Collector(Agent):
         max_y = 1
 
         max_z = 1
-        min_z = 0.6
+        min_z = 0.4
 
         # for the inputs we have a 3x3 matrix for each sensor, and each sensor is a channel
         # resulting in a 3x3x3 input tensor
@@ -147,18 +148,18 @@ class Collector(Agent):
                 for x in np.linspace(min_x, max_x, n):
                     inputs.append((x, y, z))
 
-        # the first hidden layer will be a 3x3x3 tensor
-        max_z = 0.3
-        min_z = 0.0
+        # the first hidden layer will be a 3x3x2 tensor
+        max_z = 0.2
+        min_z = -0.2
         hidden_layer_1 = list()
-        for z in np.linspace(max_z, min_z, 3):
+        for z in np.linspace(max_z, min_z, 2):
             for y in np.linspace(max_y, min_y, n):
                 for x in np.linspace(min_x, max_x, n):
                     hidden_layer_1.append((x, y, z))
 
         # the second hidden layer will be a 3x3x2 tensor
-        max_z = -0.2
-        min_z = -0.4
+        max_z = -0.4
+        min_z = -0.8
         hidden_layer_2 = list()
         for z in np.linspace(max_z, min_z, 2):
             for y in np.linspace(max_y, min_y, n):
@@ -187,7 +188,7 @@ class Collector(Agent):
 
     def portrayal(self):
         # The documentation is wrong once again
-        # Filled doesn't use str "true"/"false" but the python True or False boolean
+        # Filled doesn't use strings "true"/"false" but the python True or False boolean
         shape = {
             # "text": f"id:{self.unique_id}",
             "text_color": "black",

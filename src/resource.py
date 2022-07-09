@@ -8,7 +8,8 @@ from .tag_scheduler import TagScheduler
 
 class ResourceModel(Model):
 
-    def __init__(self, width, height, num_collectors: typing.Union[int, list[Collector]], num_resources, num_gathering_points, debug=False):
+    def __init__(self, width, height, num_collectors: typing.Union[int, list[Collector]], num_resources,
+                 num_gathering_points, debug=False):
         super().__init__()
         self.grid = None
         self.width = width
@@ -45,7 +46,6 @@ class ResourceModel(Model):
                 self.n_agents += 1
                 self.schedule.add(a, agent_cl)
                 self.grid.place_agent(a, self.grid.find_empty())
-
 
     def step(self) -> bool:
         # for the moment we only need for collectors to make steps, not all agents
