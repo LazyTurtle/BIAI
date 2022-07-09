@@ -74,14 +74,12 @@ class ResourceModel(Model):
                     agent.resources += 1
                     self.grid.remove_agent(current_agent)
                     self.grid.move_agent(agent, new_pos)
-
                     agent.points += 1
 
             # TODO introduce a way to gather more than one resource at a time
             if type(current_agent) is GatheringPoint:
                 if agent.resources > 0:
                     agent.resources = 0
-
                     agent.points += 1
 
             if type(current_agent) is Collector:

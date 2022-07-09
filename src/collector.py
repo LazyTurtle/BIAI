@@ -52,6 +52,8 @@ class Collector(Agent):
         # by the coordinates of hyper neat
         input_data = input_data.flatten()
         output = None
+        # This isn't strictly needed, but since it's a recurrent neural network and pureples examples do it
+        # we are doing it as well, though it doesn't seem to have any effect on the evolution
         for _ in range(self.activations):
             output = self.neural_network.activate(input_data)
         if self.debug:
