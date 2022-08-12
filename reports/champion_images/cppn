@@ -1,0 +1,33 @@
+digraph svg {
+	node [fontsize=7 height=0.2 shape=circle width=0.2]
+	-1 [fillcolor=lightgray shape=box style=filled]
+	-2 [fillcolor=lightgray shape=box style=filled]
+	-3 [fillcolor=lightgray shape=box style=filled]
+	-4 [fillcolor=lightgray shape=box style=filled]
+	0 [fillcolor=lightblue fixedsize=true fontsize=7 height=0.45 label="0
+(1, 0)(2, 0)" style=filled width=0.45]
+	1 [fillcolor=lightblue fixedsize=true fontsize=7 height=0.45 label="1
+(1, 1)(2, 0)" style=filled width=0.45]
+	2 [fillcolor=lightblue fixedsize=true fontsize=7 height=0.45 label="2
+(1, 1)(0, 0)" style=filled width=0.45]
+	6 [fillcolor=lightblue fixedsize=true fontsize=7 height=0.45 label="6
+(2, 0)(0, 0)" style=filled width=0.45]
+	-1 -> 0 [color=red penwidth=0.2007347253151499 style=solid]
+	-3 -> 0 [color=red penwidth=0.19827999107597888 style=solid]
+	-4 -> 0 [color=green penwidth=0.10020862539543442 style=solid]
+	-1 -> 1 [color=green penwidth=0.12690522733347467 style=solid]
+	-2 -> 1 [color=red penwidth=0.2435291096723556 style=solid]
+	-3 -> 1 [color=red penwidth=0.24519254832526757 style=solid]
+	-4 -> 1 [color=red penwidth=0.2422583311478302 style=solid]
+	-1 -> 2 [color=green penwidth=0.1157782761592619 style=solid]
+	-2 -> 2 [color=red penwidth=0.11951774965578155 style=solid]
+	-3 -> 2 [color=red penwidth=0.1191407462250513 style=solid]
+	-4 -> 2 [color=green penwidth=0.11809383450068837 style=solid]
+	-1 -> 3 [color=red penwidth=0.3039857577032411 style=solid]
+	-3 -> 3 [color=green penwidth=0.3097488251648717 style=solid]
+	-2 -> 4 [color=red penwidth=0.2902773483154132 style=solid]
+	-4 -> 4 [color=green penwidth=0.2924960132009724 style=solid]
+	3 -> 5 [color=green penwidth=0.28404068952128525 style=solid]
+	4 -> 5 [color=green penwidth=0.2950352332719245 style=solid]
+	5 -> 6 [color=green penwidth=0.31571559284510375 style=solid]
+}

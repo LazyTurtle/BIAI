@@ -1,12 +1,9 @@
 import logging
-import os
 from datetime import datetime
 from src.resource import ResourceModel
 from src.resource import Collector
 
 import yaml
-
-from deep_hyperneat.genome import Genome  # Genome class
 from deep_hyperneat.population import Population  # Population class
 from deep_hyperneat.phenomes import FeedForwardCPPN as CPPN  # CPPN class
 from deep_hyperneat.decode import decode  # Decoder for CPPN -> Substrate
@@ -14,17 +11,15 @@ from deep_hyperneat.visualize import draw_net  # optional, for visualizing netwo
 
 fit_max = list()
 fit_mean = list()
-
-#  NEAT_CONFIG_FILE_PATH = "config/NEAT.config"
 DHN_CONFIG_FILE_PATH = "config/DHN_config.yaml"
 CONFIG = None
 
 
 def evolve(genomes):
     width = CONFIG["environment"]["width"]
-    height =        CONFIG["environment"]["height"]
-    num_resources =         CONFIG["environment"]["num_resources"]
-    num_gathering_points =  CONFIG["environment"]["num_gathering_points"]
+    height = CONFIG["environment"]["height"]
+    num_resources = CONFIG["environment"]["num_resources"]
+    num_gathering_points = CONFIG["environment"]["num_gathering_points"]
     input_dims = CONFIG["network"]["substrate_input_dims"]
     sheet_dims = CONFIG["network"]["substrate_sheet_dims"]
     output_dims = CONFIG["network"]["substrate_output_dims"]
@@ -38,7 +33,7 @@ def evolve(genomes):
         for i in range(len(batch)):
             genome_id, genome = batch[i]
             cppn = CPPN.create(genome)
-            substrate = decode(cppn,input_dims,output_dims,sheet_dims)
+            substrate = decode(cppn, input_dims, output_dims, sheet_dims)
             agent = collectors[i]
             agent.evolution_setup(substrate, genome)
 
@@ -66,7 +61,6 @@ def batches(list_to_batch, batch_size=1):
     list_length = len(list_to_batch)
     for index in range(0, list_length, batch_size):
         end_batch = min(index + batch_size, list_length)
-        # logging.info(f"Batch {index}-{end_batch}")
         yield list_to_batch[index:end_batch]
 
 
@@ -80,13 +74,6 @@ def setup_logging():
 
 
 def best_agent():
-    """cwd = os.getcwd()
-    neat_config_file = os.path.join(cwd, NEAT_CONFIG_FILE_PATH)
-    neat_config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet,
-                                     neat.DefaultStagnation, neat_config_file)
-    pop = neat.population.Population(neat_config)
-    best = pop.run(evolve, GENERATIONS)"""
-
     key = CONFIG["population"]["key"]
     size = CONFIG["population"]["size"]
     elitism = CONFIG["population"]["elitism"]
@@ -100,8 +87,8 @@ def best_agent():
         CONFIG["network"]["substrate_input_dims"],
         CONFIG["network"]["substrate_output_dims"],
         CONFIG["network"]["substrate_sheet_dims"])
-    draw_net(best_cppn, filename="report-latex/images/xor_cppn")
-    draw_net(substrate, filename="report-latex/images/xor_substrate")
+    draw_net(best_cppn, filename="reports/champion_images/cppn")
+    draw_net(substrate, filename="reports/champion_images/substrate")
 
     import matplotlib.pyplot as plt
 

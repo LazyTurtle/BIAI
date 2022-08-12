@@ -45,24 +45,27 @@ class Collector(Agent):
     def get_action(self):
         input_data = self.get_sensor_data()
         #  flatten to a plane for DHN
-        plane_data = np.concatenate([input_data[0].flatten().reshape([-1,1]),
-                                     input_data[1].flatten().reshape([-1,1]),
-                                     input_data[2].flatten().reshape([-1,1])],1).reshape([3,9])
+        plane_data = np.concatenate([input_data[0].flatten().reshape([-1, 1]),
+                                     input_data[1].flatten().reshape([-1, 1]),
+                                     input_data[2].flatten().reshape([-1, 1])], 1).reshape([3, 9])
         if self.debug:
             logging.info(f"Collector {self.unique_id}")
             logging.info("From sensors:")
             logging.info(f"\n{plane_data}")
-
+        plane_data = plane_data.flatten()
+        # we need to manually add the bias node
+        plane_data = np.concatenate([plane_data, (1.0,)])
         output = self.neural_network.activate(plane_data)
 
         if self.debug:
             logging.info(f"output activations: {output}")
-        prob_mass = sum(output)
-        action = None
+        activation = np.exp(output)
+        prob_mass = sum(activation)
+
         if prob_mass == 0.:
             action = random.choice(range(9))
         else:
-            prob = np.array(output) / prob_mass
+            prob = np.array(activation) / prob_mass
             action = np.random.choice(range(9), p=prob)
 
         return action

@@ -83,8 +83,8 @@ class ResourceModel(Model):
                     agent.points += 1
 
             if type(current_agent) is Collector:
-                # for now, it's not planned to do anything in this case
-                pass
+                if self.debug:
+                    print("Agent hit another agent.")
 
     # takes into account the toroidal space
     def relative_distances(self, agent_a, agent_b):

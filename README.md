@@ -1,2 +1,2 @@
 # BIAI
-<!-- need to install mesa, numpy, pandas -->
+<!-- need to install mesa, numpy, pandas, graphviz -->
