@@ -44,18 +44,17 @@ class Collector(Agent):
 
     def get_action(self):
         input_data = self.get_sensor_data()
+        #  flatten to a plane for DHN
+        plane_data = np.concatenate([input_data[0].flatten().reshape([-1,1]),
+                                     input_data[1].flatten().reshape([-1,1]),
+                                     input_data[2].flatten().reshape([-1,1])],1).reshape([3,9])
         if self.debug:
             logging.info(f"Collector {self.unique_id}")
             logging.info("From sensors:")
-            logging.info(f"\n{input_data}")
-        # The inputs are flattened in order to both have a list (required by neat) and to follow the order defined
-        # by the coordinates of hyper neat
-        input_data = input_data.flatten()
-        output = None
-        # This isn't strictly needed, but since it's a recurrent neural network and pureples examples do it
-        # we are doing it as well, though it doesn't seem to have any effect on the evolution
-        for _ in range(self.activations):
-            output = self.neural_network.activate(input_data)
+            logging.info(f"\n{plane_data}")
+
+        output = self.neural_network.activate(plane_data)
+
         if self.debug:
             logging.info(f"output activations: {output}")
         prob_mass = sum(output)

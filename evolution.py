@@ -8,7 +8,7 @@ import yaml
 
 from deep_hyperneat.genome import Genome  # Genome class
 from deep_hyperneat.population import Population  # Population class
-from deep_hyperneat.phenomes import FeedForwardCPPN  # CPPN class
+from deep_hyperneat.phenomes import FeedForwardCPPN as CPPN  # CPPN class
 from deep_hyperneat.decode import decode  # Decoder for CPPN -> Substrate
 from deep_hyperneat.visualize import draw_net  # optional, for visualizing networks
 
@@ -17,34 +17,40 @@ fit_mean = list()
 
 #  NEAT_CONFIG_FILE_PATH = "config/NEAT.config"
 DHN_CONFIG_FILE_PATH = "config/DHN_config.yaml"
+CONFIG = None
 
 
-def evolve(genomes, config):
-    input_coo, hidden_coo, output_coo = Collector.topology()
-    substrate = Substrate(input_coo, output_coo, hidden_coo)
+def evolve(genomes):
+    width = CONFIG["environment"]["width"]
+    height =        CONFIG["environment"]["height"]
+    num_resources =         CONFIG["environment"]["num_resources"]
+    num_gathering_points =  CONFIG["environment"]["num_gathering_points"]
+    input_dims = CONFIG["network"]["substrate_input_dims"]
+    sheet_dims = CONFIG["network"]["substrate_sheet_dims"]
+    output_dims = CONFIG["network"]["substrate_output_dims"]
+    steps = CONFIG["evolution"]["steps"]
 
-    for batch in batches(genomes, BATCH_SIZE):
+    for batch in batches(genomes, CONFIG["evolution"]["batch_size"]):
         n_agents = len(batch)
-        environment = ResourceModel(WIDTH, HEIGHT, n_agents, NUM_RESOURCES, NUM_GATHERING_POINTS)
+        environment = ResourceModel(width, height, n_agents, num_resources, num_gathering_points)
         collectors = environment.agents(Collector)
 
         for i in range(len(batch)):
             genome_id, genome = batch[i]
-            cppn = neat.nn.FeedForwardNetwork.create(genome, config)
-            nn = create_phenotype_network(cppn, substrate)
+            cppn = CPPN.create(genome)
+            substrate = decode(cppn,input_dims,output_dims,sheet_dims)
             agent = collectors[i]
-            # nn.reset()  # in case we do multiple trials we have to reset the rnn before each of one
-            agent.evolution_setup(nn, genome)
+            agent.evolution_setup(substrate, genome)
 
         steps_used = 0
-        for i in range(STEPS):
+        for i in range(steps):
             has_converged = environment.step()
             steps_used = i + 1
             if has_converged:
                 break
 
         for agent in collectors:
-            agent.genome.fitness = agent.points * (STEPS / steps_used)
+            agent.genome.fitness = agent.points * (steps / steps_used)
 
     fitnesses = [g.fitness for _, g in genomes]
     max_fitness = max(fitnesses)
@@ -73,7 +79,7 @@ def setup_logging():
         filemode="w+")  # I'm only interested in the last log of the day, so I just overwrite over the same file
 
 
-def best_agent(config):
+def best_agent():
     """cwd = os.getcwd()
     neat_config_file = os.path.join(cwd, NEAT_CONFIG_FILE_PATH)
     neat_config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet,
@@ -81,6 +87,21 @@ def best_agent(config):
     pop = neat.population.Population(neat_config)
     best = pop.run(evolve, GENERATIONS)"""
 
+    key = CONFIG["population"]["key"]
+    size = CONFIG["population"]["size"]
+    elitism = CONFIG["population"]["elitism"]
+    generations = CONFIG["evolution"]["generations"]
+
+    population = Population(key, size, elitism)
+    best_individual = population.run(evolve, 20, generations)
+    best_cppn = CPPN.create(best_individual)
+    substrate = decode(
+        best_cppn,
+        CONFIG["network"]["substrate_input_dims"],
+        CONFIG["network"]["substrate_output_dims"],
+        CONFIG["network"]["substrate_sheet_dims"])
+    draw_net(best_cppn, filename="report-latex/images/xor_cppn")
+    draw_net(substrate, filename="report-latex/images/xor_substrate")
 
     import matplotlib.pyplot as plt
 
@@ -88,11 +109,11 @@ def best_agent(config):
     plt.plot(fit_mean)
     plt.legend(["Max fitness", "Mean fitness"])
     plt.show()
-    return best
+    return best_individual
 
 
 if __name__ == '__main__':
     setup_logging()
     with open(DHN_CONFIG_FILE_PATH) as config_file:
-        config = yaml.safe_load(config_file)
-    best_agent(config)
+        CONFIG = yaml.safe_load(config_file)
+    best_agent()
