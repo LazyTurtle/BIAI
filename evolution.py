@@ -87,6 +87,8 @@ def best_agent():
         CONFIG["network"]["substrate_input_dims"],
         CONFIG["network"]["substrate_output_dims"],
         CONFIG["network"]["substrate_sheet_dims"])
+
+
     draw_net(best_cppn, filename="reports/champion_images/cppn")
     draw_net(substrate, filename="reports/champion_images/substrate")
 
