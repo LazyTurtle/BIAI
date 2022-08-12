@@ -7,7 +7,7 @@ from src.resource import ResourceModel
 from src.collector import Collector
 from mesa.visualization.ModularVisualization import ModularServer
 
-NEAT_CONFIG_FILE_PATH = "config/NEAT.config"
+#  NEAT_CONFIG_FILE_PATH = "config/NEAT.config"
 
 def setup_logging():
     # filename = datetime.now().strftime('logs/log_%H_%M_%d_%m_%Y.log')

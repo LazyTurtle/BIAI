@@ -13,7 +13,7 @@ from deep_hyperneat.visualize import draw_net  # optional, for visualizing netwo
 fit_max = list()
 fit_mean = list()
 
-NEAT_CONFIG_FILE_PATH = "config/NEAT.config"
+#  NEAT_CONFIG_FILE_PATH = "config/NEAT.config"
 
 GENERATIONS = 50
 STEPS = 200
