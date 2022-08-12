@@ -4,11 +4,11 @@ from datetime import datetime
 from src.resource import ResourceModel
 from src.resource import Collector
 
-from genome import Genome # Genome class
-from population import Population # Population class
-from phenomes import FeedForwardCPPN # CPPN class
-from decode import decode # Decoder for CPPN -> Substrate
-from visualize import draw_net # optional, for visualizing networks
+from deep_hyperneat.genome import Genome  # Genome class
+from deep_hyperneat.population import Population  # Population class
+from deep_hyperneat.phenomes import FeedForwardCPPN  # CPPN class
+from deep_hyperneat.decode import decode  # Decoder for CPPN -> Substrate
+from deep_hyperneat.visualize import draw_net  # optional, for visualizing networks
 
 fit_max = list()
 fit_mean = list()
@@ -98,4 +98,3 @@ def best_agent():
 if __name__ == '__main__':
     setup_logging()
     best_agent()
-
