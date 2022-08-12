@@ -1,17 +1,13 @@
 import logging
 import mesa.visualization.modules
 import evolution
-import neat
 import os
 from datetime import datetime
 from src.resource import ResourceModel
 from src.collector import Collector
-from pureples.shared.substrate import Substrate
 from mesa.visualization.ModularVisualization import ModularServer
-from pureples.hyperneat.hyperneat import create_phenotype_network
 
 NEAT_CONFIG_FILE_PATH = "config/NEAT.config"
-
 
 def setup_logging():
     # filename = datetime.now().strftime('logs/log_%H_%M_%d_%m_%Y.log')

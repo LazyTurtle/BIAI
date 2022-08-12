@@ -1,11 +1,14 @@
 import logging
-import neat
 import os
 from datetime import datetime
 from src.resource import ResourceModel
 from src.resource import Collector
-from pureples.hyperneat.hyperneat import create_phenotype_network
-from pureples.shared.substrate import Substrate
+
+from genome import Genome # Genome class
+from population import Population # Population class
+from phenomes import FeedForwardCPPN # CPPN class
+from decode import decode # Decoder for CPPN -> Substrate
+from visualize import draw_net # optional, for visualizing networks
 
 fit_max = list()
 fit_mean = list()
