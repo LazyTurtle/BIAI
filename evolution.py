@@ -4,6 +4,8 @@ from datetime import datetime
 from src.resource import ResourceModel
 from src.resource import Collector
 
+import yaml
+
 from deep_hyperneat.genome import Genome  # Genome class
 from deep_hyperneat.population import Population  # Population class
 from deep_hyperneat.phenomes import FeedForwardCPPN  # CPPN class
@@ -14,14 +16,7 @@ fit_max = list()
 fit_mean = list()
 
 #  NEAT_CONFIG_FILE_PATH = "config/NEAT.config"
-
-GENERATIONS = 50
-STEPS = 200
-WIDTH = 20
-HEIGHT = 20
-NUM_RESOURCES = 20
-NUM_GATHERING_POINTS = 1
-BATCH_SIZE = 1
+DHN_CONFIG_FILE_PATH = "config/DHN_config.yaml"
 
 
 def evolve(genomes, config):
@@ -78,13 +73,14 @@ def setup_logging():
         filemode="w+")  # I'm only interested in the last log of the day, so I just overwrite over the same file
 
 
-def best_agent():
-    cwd = os.getcwd()
+def best_agent(config):
+    """cwd = os.getcwd()
     neat_config_file = os.path.join(cwd, NEAT_CONFIG_FILE_PATH)
     neat_config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet,
                                      neat.DefaultStagnation, neat_config_file)
     pop = neat.population.Population(neat_config)
-    best = pop.run(evolve, GENERATIONS)
+    best = pop.run(evolve, GENERATIONS)"""
+
 
     import matplotlib.pyplot as plt
 
@@ -97,4 +93,6 @@ def best_agent():
 
 if __name__ == '__main__':
     setup_logging()
-    best_agent()
+    with open(DHN_CONFIG_FILE_PATH) as config_file:
+        config = yaml.safe_load(config_file)
+    best_agent(config)
