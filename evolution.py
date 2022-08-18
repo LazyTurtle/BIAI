@@ -78,9 +78,10 @@ def best_agent():
     size = CONFIG["population"]["size"]
     elitism = CONFIG["population"]["elitism"]
     generations = CONFIG["evolution"]["generations"]
+    fitness_goal = 20
 
     population = Population(key, size, elitism)
-    best_individual = population.run(evolve, 20, generations)
+    best_individual = population.run(evolve, fitness_goal, generations)
     best_cppn = CPPN.create(best_individual)
     substrate = decode(
         best_cppn,
@@ -93,7 +94,7 @@ def best_agent():
     draw_net(substrate, filename="reports/champion_images/substrate")
 
     import matplotlib.pyplot as plt
-
+    plt.figure()
     plt.plot(fit_max)
     plt.plot(fit_mean)
     plt.legend(["Max fitness", "Mean fitness"])

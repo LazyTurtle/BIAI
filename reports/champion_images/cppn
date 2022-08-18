@@ -8,26 +8,33 @@ digraph svg {
 (1, 0)(2, 0)" style=filled width=0.45]
 	1 [fillcolor=lightblue fixedsize=true fontsize=7 height=0.45 label="1
 (1, 1)(2, 0)" style=filled width=0.45]
-	2 [fillcolor=lightblue fixedsize=true fontsize=7 height=0.45 label="2
+	3 [fillcolor=lightblue fixedsize=true fontsize=7 height=0.45 label="3
+(1, 1)(3, 0)" style=filled width=0.45]
+	7 [fillcolor=lightblue fixedsize=true fontsize=7 height=0.45 label="7
+(2, 0)(3, 0)" style=filled width=0.45]
+	9 [fillcolor=lightblue fixedsize=true fontsize=7 height=0.45 label="9
+(1, 1)(4, 0)" style=filled width=0.45]
+	13 [fillcolor=lightblue fixedsize=true fontsize=7 height=0.45 label="13
+(3, 0)(4, 0)" style=filled width=0.45]
+	15 [fillcolor=lightblue fixedsize=true fontsize=7 height=0.45 label="15
 (1, 1)(0, 0)" style=filled width=0.45]
-	6 [fillcolor=lightblue fixedsize=true fontsize=7 height=0.45 label="6
-(2, 0)(0, 0)" style=filled width=0.45]
-	-1 -> 0 [color=red penwidth=0.2007347253151499 style=solid]
-	-3 -> 0 [color=red penwidth=0.19827999107597888 style=solid]
-	-4 -> 0 [color=green penwidth=0.10020862539543442 style=solid]
-	-1 -> 1 [color=green penwidth=0.12690522733347467 style=solid]
-	-2 -> 1 [color=red penwidth=0.2435291096723556 style=solid]
-	-3 -> 1 [color=red penwidth=0.24519254832526757 style=solid]
-	-4 -> 1 [color=red penwidth=0.2422583311478302 style=solid]
-	-1 -> 2 [color=green penwidth=0.1157782761592619 style=solid]
-	-2 -> 2 [color=red penwidth=0.11951774965578155 style=solid]
-	-3 -> 2 [color=red penwidth=0.1191407462250513 style=solid]
-	-4 -> 2 [color=green penwidth=0.11809383450068837 style=solid]
-	-1 -> 3 [color=red penwidth=0.3039857577032411 style=solid]
-	-3 -> 3 [color=green penwidth=0.3097488251648717 style=solid]
-	-2 -> 4 [color=red penwidth=0.2902773483154132 style=solid]
-	-4 -> 4 [color=green penwidth=0.2924960132009724 style=solid]
-	3 -> 5 [color=green penwidth=0.28404068952128525 style=solid]
-	4 -> 5 [color=green penwidth=0.2950352332719245 style=solid]
-	5 -> 6 [color=green penwidth=0.31571559284510375 style=solid]
+	19 [fillcolor=lightblue fixedsize=true fontsize=7 height=0.45 label="19
+(4, 0)(0, 0)" style=filled width=0.45]
+	-4 -> 0 [color=red penwidth=0.13601407072028893 style=solid]
+	-1 -> 0 [color=red penwidth=0.22989757275651576 style=solid]
+	-1 -> 16 [color=red penwidth=0.3055842295494302 style=solid]
+	-4 -> 3 [color=green penwidth=0.11285867861737553 style=solid]
+	-2 -> 17 [color=red penwidth=0.3116365717274073 style=solid]
+	-4 -> 17 [color=green penwidth=0.23279248396853539 style=solid]
+	16 -> 18 [color=green penwidth=0.3118871187321735 style=solid]
+	17 -> 18 [color=green penwidth=0.3548608669977066 style=solid]
+	-2 -> 11 [color=red penwidth=0.20988946926174473 style=solid]
+	16 -> 11 [color=green penwidth=0.21378232990376617 style=solid]
+	18 -> 19 [color=green penwidth=0.28449786805253907 style=solid]
+	11 -> 12 [color=green penwidth=0.2779606325495111 style=solid]
+	12 -> 13 [color=green penwidth=0.38476978735817813 style=solid]
+	-4 -> 14 [color=green penwidth=0.27602095969195367 style=solid]
+	13 -> 14 [color=green penwidth=0.22211942262253964 style=solid]
+	14 -> 9 [color=red penwidth=0.1533159769779333 style=solid]
+	14 -> 15 [color=red penwidth=0.10073361742262645 style=solid]
 }

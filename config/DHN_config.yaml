@@ -1,12 +1,12 @@
 evolution:
-  generations: 5
+  generations: 50
   steps: 200
   batch_size: 1
 environment:
   width: 20
   height: 20
-  num_resources: 20
-  num_gathering_points: 1
+  num_resources: 40
+  num_gathering_points: 3
 network:
   substrate_input_dims:
     - 3
@@ -19,5 +19,5 @@ network:
     - 3
 population:
   key: 0 # Key for population
-  size: 10
-  elitism: 2 # Number of members of pop to keep each generation
+  size: 100
+  elitism: 20 # Number of members of pop to keep each generation

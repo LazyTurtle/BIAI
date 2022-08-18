@@ -1,4 +1,5 @@
 import random
+
 import src.resource
 import math
 import logging
@@ -59,7 +60,12 @@ class Collector(Agent):
 
         if self.debug:
             logging.info(f"output activations: {output}")
-        activation = np.exp(output)
+        # normalize output
+        normalizing_factor = (np.max(output) - np.min(output))
+        if normalizing_factor==0.0:
+            return random.choice(range(9))
+        output = (output - np.min(output))/(np.max(output) - np.min(output))
+        activation = output
         prob_mass = sum(activation)
 
         if prob_mass == 0.:
