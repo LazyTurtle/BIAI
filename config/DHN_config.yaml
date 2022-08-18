@@ -14,9 +14,7 @@ network:
   substrate_sheet_dims:
     - 3
     - 3
-  substrate_output_dims:
-    - 3
-    - 3
+  substrate_output_dims: 9
 population:
   key: 0 # Key for population
   size: 100
