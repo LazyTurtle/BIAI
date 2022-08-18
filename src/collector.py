@@ -9,13 +9,13 @@ from mesa import Agent
 
 class Collector(Agent):
 
-    def __init__(self, unique_id, model, proximity_distance=1, vision_distance=4, debug=False):
+    def __init__(self, unique_id, model, proximity_distance=1, resource_vision_distance=3, gathering_points_vision_distance=5, debug=False):
         super(Collector, self).__init__(unique_id, model)
         self.proximity_distance = proximity_distance
         self.prox_shape = (self.proximity_distance * 2 + 1, self.proximity_distance * 2 + 1)
-        self.proximity = np.zeros(self.prox_shape)
-        self.resources_vision_distance = vision_distance
-        self.gathering_points_vision_distance = 10
+        self.resources_vision_distance = resource_vision_distance
+        self.gathering_points_vision_distance = gathering_points_vision_distance
+        self.proximity = None
         self.resources_vision = None
         self.gathering_vision = None
         self.debug = debug
@@ -58,12 +58,14 @@ class Collector(Agent):
             output = self.neural_network.activate(input_data)
         if self.debug:
             logging.info(f"output activations: {output}")
-        prob_mass = sum(output)
+
+        activations = np.exp(output)  # in case we have negative outputs, it shouldn't happen though
+        prob_mass = sum(activations)
         action = None
         if prob_mass == 0.:
             action = random.choice(range(9))
         else:
-            prob = np.array(output) / prob_mass
+            prob = np.array(activations) / prob_mass
             action = np.random.choice(range(9), p=prob)
 
         return action
@@ -75,7 +77,7 @@ class Collector(Agent):
 
     def update_proximity(self):
         # reset, 1 means that you can move freely there
-        self.proximity.fill(1)
+        self.proximity = np.ones(self.prox_shape)
         neighbours = self.model.grid.get_neighbors(
             self.pos, moore=True, include_center=False, radius=self.proximity_distance)
 
@@ -194,4 +196,7 @@ class Collector(Agent):
         return shape
 
     def get_sensor_data(self):
-        return np.array((self.proximity, self.resources_vision, self.gathering_vision))
+        return np.concatenate([
+            self.proximity.flatten().reshape([-1, 1]),
+            self.resources_vision.flatten().reshape([-1, 1]),
+            self.gathering_vision.flatten().reshape([-1, 1])], 1).reshape([3, 9])
