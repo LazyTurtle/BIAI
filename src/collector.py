@@ -132,50 +132,42 @@ class Collector(Agent):
 
     @staticmethod
     def topology():
-        n = 3  # input matrix dimensions
         min_x = -1
         max_x = 1
 
-        min_y = -1
-        max_y = 1
-
-        max_z = 1
-        min_z = 0.4
-
         # for the inputs we have a 3x3 matrix for each sensor, and each sensor is a channel
-        # resulting in a 3x3x3 input tensor
+        # we need a 3x9 matrix
+        min_y = -1
+        max_y = -0.63
         inputs = list()
-        for z in np.linspace(max_z, min_z, 3):
-            for y in np.linspace(max_y, min_y, n):  # max to min to mirror how np arrange x and y coordinates
-                for x in np.linspace(min_x, max_x, n):
-                    inputs.append((x, y, z))
+        for y in np.linspace(max_y, min_y, 3):      # top-down
+            for x in np.linspace(min_x, max_x, 9):  # left-right
+                inputs.append((x, y))
 
-        # the first hidden layer will be a 3x3x2 tensor
-        max_z = 0.2
-        min_z = -0.2
+        # the first hidden layer will be a 3x6 matrix
+        min_y = -0.45
+        max_y = -0.09
         hidden_layer_1 = list()
-        for z in np.linspace(max_z, min_z, 2):
-            for y in np.linspace(max_y, min_y, n):
-                for x in np.linspace(min_x, max_x, n):
-                    hidden_layer_1.append((x, y, z))
+        for y in np.linspace(max_y, min_y, 3):
+            for x in np.linspace(min_x, max_x, 6):
+                hidden_layer_1.append((x, y))
 
-        # the second hidden layer will be a 3x3x2 tensor
-        max_z = -0.4
-        min_z = -0.8
+        # the second hidden layer will be a 3x3 metrix
+        min_y = 0.09
+        max_y = 0.45
         hidden_layer_2 = list()
-        for z in np.linspace(max_z, min_z, 2):
-            for y in np.linspace(max_y, min_y, n):
-                for x in np.linspace(min_x, max_x, n):
-                    hidden_layer_2.append((x, y, z))
-        hidden_layers = [hidden_layer_1, hidden_layer_2]
+        for y in np.linspace(max_y, min_y, 3):
+            for x in np.linspace(min_x, max_x, 3):
+                hidden_layer_2.append((x, y))
 
-        max_z = -1
-        min_z = -1
+        hidden_layers = [hidden_layer_2, hidden_layer_1]  # it's the same order of the example
+
+        min_y = 0.63
+        max_y = 1.0
         output = list()
-        for z in np.linspace(max_z, min_z, 1):
-            for y in np.linspace(max_y, min_y, n):
-                for x in np.linspace(min_x, max_x, n):
-                    output.append((x, y, z))
+        for y in np.linspace(max_y, min_y, 3):
+            for x in np.linspace(min_x, max_x, 3):
+                output.append((x, y))
 
         return inputs, hidden_layers, output
 
