@@ -1,0 +1,7 @@
+generations: 50
+steps: 200
+width: 40
+height: 40
+resources: 40
+gathering_points: 5
+batch_size: 1

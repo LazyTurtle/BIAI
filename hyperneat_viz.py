@@ -10,7 +10,7 @@ from pureples.shared.substrate import Substrate
 from mesa.visualization.ModularVisualization import ModularServer
 from pureples.hyperneat.hyperneat import create_phenotype_network
 
-NEAT_CONFIG_FILE_PATH = "config/NEAT.config"
+NEAT_CONFIG_FILE_PATH = "config/Low Mutation.config"
 
 
 def setup_logging():
