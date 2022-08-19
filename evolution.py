@@ -14,10 +14,10 @@ NEAT_CONFIG_FILE_PATH = "config/NEAT.config"
 
 GENERATIONS = 50
 STEPS = 200
-WIDTH = 20
-HEIGHT = 20
-NUM_RESOURCES = 20
-NUM_GATHERING_POINTS = 1
+WIDTH = 40
+HEIGHT = 40
+NUM_RESOURCES = 40
+NUM_GATHERING_POINTS = 5
 BATCH_SIZE = 1
 
 
@@ -84,7 +84,7 @@ def best_agent():
     best = pop.run(evolve, GENERATIONS)
 
     import matplotlib.pyplot as plt
-
+    plt.figure()
     plt.plot(fit_max)
     plt.plot(fit_mean)
     plt.legend(["Max fitness", "Mean fitness"])
