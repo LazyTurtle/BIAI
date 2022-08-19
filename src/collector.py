@@ -11,8 +11,8 @@ EVOLUTION_CONFIG_FILE_PATH = "config/Evolution.yaml"
 
 class Collector(Agent):
 
-    def __init__(self, unique_id, model, proximity_distance=1, resource_vision_distance=5,
-                 gathering_points_vision_distance=10, debug=False):
+    def __init__(self, unique_id, model, proximity_distance=1, resource_vision_distance=3,
+                 gathering_points_vision_distance=5, debug=False):
         super(Collector, self).__init__(unique_id, model)
         self.proximity_distance = proximity_distance
         self.prox_shape = (self.proximity_distance * 2 + 1, self.proximity_distance * 2 + 1)
@@ -204,8 +204,8 @@ class Collector(Agent):
         return shape
 
     def get_sensor_data(self):
-        return np.concatenate([self.proximity, self.resources_vision, self.gathering_vision], axis=1)
-        # return np.concatenate([
-        #    self.proximity.flatten().reshape([-1, 1]),
-        #    self.resources_vision.flatten().reshape([-1, 1]),
-        #    self.gathering_vision.flatten().reshape([-1, 1])], 1).reshape([3, 9])
+        # return np.concatenate([self.proximity, self.resources_vision, self.gathering_vision], axis=1)
+        return np.concatenate([
+           self.proximity.flatten().reshape([-1, 1]),
+           self.resources_vision.flatten().reshape([-1, 1]),
+           self.gathering_vision.flatten().reshape([-1, 1])], 1).reshape([3, 9])
