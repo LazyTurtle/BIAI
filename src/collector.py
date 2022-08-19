@@ -3,18 +3,26 @@ import src.resource
 import math
 import logging
 import numpy as np
-
+import yaml
 from mesa import Agent
+
+EVOLUTION_CONFIG_FILE_PATH = "config/Evolution.yaml"
 
 
 class Collector(Agent):
 
-    def __init__(self, unique_id, model, proximity_distance=1, resource_vision_distance=5, gathering_points_vision_distance=10, debug=False):
+    def __init__(self, unique_id, model, proximity_distance=1, resource_vision_distance=5,
+                 gathering_points_vision_distance=10, debug=False):
         super(Collector, self).__init__(unique_id, model)
         self.proximity_distance = proximity_distance
         self.prox_shape = (self.proximity_distance * 2 + 1, self.proximity_distance * 2 + 1)
-        self.resources_vision_distance = resource_vision_distance
-        self.gathering_points_vision_distance = gathering_points_vision_distance
+
+        with open(EVOLUTION_CONFIG_FILE_PATH) as config_file:
+            econfig = yaml.safe_load(config_file)
+        self.resources_vision_distance = econfig.get("resource_vision_range", resource_vision_distance)
+        self.gathering_points_vision_distance = econfig.get("gathering_points_vision_range",
+                                                            gathering_points_vision_distance)
+
         self.proximity = None
         self.resources_vision = None
         self.gathering_vision = None
@@ -142,7 +150,7 @@ class Collector(Agent):
         min_y = -1
         max_y = -0.63
         inputs = list()
-        for y in np.linspace(max_y, min_y, 3):      # top-down
+        for y in np.linspace(max_y, min_y, 3):  # top-down
             for x in np.linspace(min_x, max_x, 9):  # left-right
                 inputs.append((x, y))
 
@@ -197,7 +205,7 @@ class Collector(Agent):
 
     def get_sensor_data(self):
         return np.concatenate([self.proximity, self.resources_vision, self.gathering_vision], axis=1)
-        #return np.concatenate([
+        # return np.concatenate([
         #    self.proximity.flatten().reshape([-1, 1]),
         #    self.resources_vision.flatten().reshape([-1, 1]),
         #    self.gathering_vision.flatten().reshape([-1, 1])], 1).reshape([3, 9])

@@ -11,7 +11,7 @@ from pureples.shared.substrate import Substrate
 fit_max = list()
 fit_mean = list()
 
-NEAT_CONFIG_FILE_PATH = "config/Low Mutation.config"
+NEAT_CONFIG_FILE_PATH = "config/High Mutation.config"
 EVOLUTION_CONFIG_FILE_PATH = "config/Evolution.yaml"
 ECONFIG = None
 
