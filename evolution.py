@@ -1,6 +1,7 @@
 import logging
 import neat
 import os
+import yaml
 from datetime import datetime
 from src.resource import ResourceModel
 from src.resource import Collector
@@ -10,24 +11,24 @@ from pureples.shared.substrate import Substrate
 fit_max = list()
 fit_mean = list()
 
-NEAT_CONFIG_FILE_PATH = "config/NEAT.config"
-
-GENERATIONS = 50
-STEPS = 200
-WIDTH = 20
-HEIGHT = 20
-NUM_RESOURCES = 20
-NUM_GATHERING_POINTS = 1
-BATCH_SIZE = 1
+NEAT_CONFIG_FILE_PATH = "config/High Mutation.config"
+EVOLUTION_CONFIG_FILE_PATH = "config/Evolution.yaml"
+ECONFIG = None
 
 
 def evolve(genomes, config):
     input_coo, hidden_coo, output_coo = Collector.topology()
     substrate = Substrate(input_coo, output_coo, hidden_coo)
+    batch_size = ECONFIG["batch_size"]
+    width = ECONFIG["width"]
+    height = ECONFIG["height"]
+    num_resources = ECONFIG["resources"]
+    num_gathering_points = ECONFIG["gathering_points"]
+    steps = ECONFIG["steps"]
 
-    for batch in batches(genomes, BATCH_SIZE):
+    for batch in batches(genomes, batch_size):
         n_agents = len(batch)
-        environment = ResourceModel(WIDTH, HEIGHT, n_agents, NUM_RESOURCES, NUM_GATHERING_POINTS)
+        environment = ResourceModel(width, height, n_agents, num_resources, num_gathering_points)
         collectors = environment.agents(Collector)
 
         for i in range(len(batch)):
@@ -39,14 +40,14 @@ def evolve(genomes, config):
             agent.evolution_setup(nn, genome)
 
         steps_used = 0
-        for i in range(STEPS):
+        for i in range(steps):
             has_converged = environment.step()
             steps_used = i + 1
             if has_converged:
                 break
 
         for agent in collectors:
-            agent.genome.fitness = agent.points * (STEPS / steps_used)
+            agent.genome.fitness = agent.points * (steps / steps_used)
 
     fitnesses = [g.fitness for _, g in genomes]
     max_fitness = max(fitnesses)
@@ -81,10 +82,11 @@ def best_agent():
     neat_config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet,
                                      neat.DefaultStagnation, neat_config_file)
     pop = neat.population.Population(neat_config)
-    best = pop.run(evolve, GENERATIONS)
+    generations = ECONFIG["generations"]
+    best = pop.run(evolve, generations)
 
     import matplotlib.pyplot as plt
-
+    plt.figure()
     plt.plot(fit_max)
     plt.plot(fit_mean)
     plt.legend(["Max fitness", "Mean fitness"])
@@ -94,5 +96,6 @@ def best_agent():
 
 if __name__ == '__main__':
     setup_logging()
+    with open(EVOLUTION_CONFIG_FILE_PATH) as config_file:
+        ECONFIG = yaml.safe_load(config_file)
     best_agent()
-

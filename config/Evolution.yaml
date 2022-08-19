@@ -1,0 +1,9 @@
+generations: 50
+steps: 200
+width: 20
+height: 20
+resources: 20
+gathering_points: 1
+batch_size: 1
+resource_vision_range: 3
+gathering_points_vision_range: 5

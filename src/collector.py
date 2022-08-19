@@ -3,19 +3,27 @@ import src.resource
 import math
 import logging
 import numpy as np
-
+import yaml
 from mesa import Agent
+
+EVOLUTION_CONFIG_FILE_PATH = "config/Evolution.yaml"
 
 
 class Collector(Agent):
 
-    def __init__(self, unique_id, model, proximity_distance=1, vision_distance=4, debug=False):
+    def __init__(self, unique_id, model, proximity_distance=1, resource_vision_distance=5,
+                 gathering_points_vision_distance=10, debug=False):
         super(Collector, self).__init__(unique_id, model)
         self.proximity_distance = proximity_distance
         self.prox_shape = (self.proximity_distance * 2 + 1, self.proximity_distance * 2 + 1)
-        self.proximity = np.zeros(self.prox_shape)
-        self.resources_vision_distance = vision_distance
-        self.gathering_points_vision_distance = 10
+
+        with open(EVOLUTION_CONFIG_FILE_PATH) as config_file:
+            econfig = yaml.safe_load(config_file)
+        self.resources_vision_distance = econfig.get("resource_vision_range", resource_vision_distance)
+        self.gathering_points_vision_distance = econfig.get("gathering_points_vision_range",
+                                                            gathering_points_vision_distance)
+
+        self.proximity = None
         self.resources_vision = None
         self.gathering_vision = None
         self.debug = debug
@@ -58,12 +66,14 @@ class Collector(Agent):
             output = self.neural_network.activate(input_data)
         if self.debug:
             logging.info(f"output activations: {output}")
-        prob_mass = sum(output)
+
+        activations = output
+        prob_mass = sum(activations)
         action = None
         if prob_mass == 0.:
             action = random.choice(range(9))
         else:
-            prob = np.array(output) / prob_mass
+            prob = np.array(activations) / prob_mass
             action = np.random.choice(range(9), p=prob)
 
         return action
@@ -75,7 +85,7 @@ class Collector(Agent):
 
     def update_proximity(self):
         # reset, 1 means that you can move freely there
-        self.proximity.fill(1)
+        self.proximity = np.ones(self.prox_shape)
         neighbours = self.model.grid.get_neighbors(
             self.pos, moore=True, include_center=False, radius=self.proximity_distance)
 
@@ -132,50 +142,42 @@ class Collector(Agent):
 
     @staticmethod
     def topology():
-        n = 3  # input matrix dimensions
         min_x = -1
         max_x = 1
 
-        min_y = -1
-        max_y = 1
-
-        max_z = 1
-        min_z = 0.4
-
         # for the inputs we have a 3x3 matrix for each sensor, and each sensor is a channel
-        # resulting in a 3x3x3 input tensor
+        # we need a 3x9 matrix
+        min_y = -1
+        max_y = -0.63
         inputs = list()
-        for z in np.linspace(max_z, min_z, 3):
-            for y in np.linspace(max_y, min_y, n):  # max to min to mirror how np arrange x and y coordinates
-                for x in np.linspace(min_x, max_x, n):
-                    inputs.append((x, y, z))
+        for y in np.linspace(max_y, min_y, 3):  # top-down
+            for x in np.linspace(min_x, max_x, 9):  # left-right
+                inputs.append((x, y))
 
-        # the first hidden layer will be a 3x3x2 tensor
-        max_z = 0.2
-        min_z = -0.2
+        # the first hidden layer will be a 3x6 matrix
+        min_y = -0.45
+        max_y = -0.09
         hidden_layer_1 = list()
-        for z in np.linspace(max_z, min_z, 2):
-            for y in np.linspace(max_y, min_y, n):
-                for x in np.linspace(min_x, max_x, n):
-                    hidden_layer_1.append((x, y, z))
+        for y in np.linspace(max_y, min_y, 3):
+            for x in np.linspace(min_x, max_x, 6):
+                hidden_layer_1.append((x, y))
 
-        # the second hidden layer will be a 3x3x2 tensor
-        max_z = -0.4
-        min_z = -0.8
+        # the second hidden layer will be a 3x3 metrix
+        min_y = 0.09
+        max_y = 0.45
         hidden_layer_2 = list()
-        for z in np.linspace(max_z, min_z, 2):
-            for y in np.linspace(max_y, min_y, n):
-                for x in np.linspace(min_x, max_x, n):
-                    hidden_layer_2.append((x, y, z))
-        hidden_layers = [hidden_layer_1, hidden_layer_2]
+        for y in np.linspace(max_y, min_y, 3):
+            for x in np.linspace(min_x, max_x, 3):
+                hidden_layer_2.append((x, y))
 
-        max_z = -1
-        min_z = -1
+        hidden_layers = [hidden_layer_2, hidden_layer_1]  # it's the same order of the example
+
+        min_y = 0.63
+        max_y = 1.0
         output = list()
-        for z in np.linspace(max_z, min_z, 1):
-            for y in np.linspace(max_y, min_y, n):
-                for x in np.linspace(min_x, max_x, n):
-                    output.append((x, y, z))
+        for y in np.linspace(max_y, min_y, 3):
+            for x in np.linspace(min_x, max_x, 3):
+                output.append((x, y))
 
         return inputs, hidden_layers, output
 
@@ -202,4 +204,8 @@ class Collector(Agent):
         return shape
 
     def get_sensor_data(self):
-        return np.array((self.proximity, self.resources_vision, self.gathering_vision))
+        return np.concatenate([self.proximity, self.resources_vision, self.gathering_vision], axis=1)
+        # return np.concatenate([
+        #    self.proximity.flatten().reshape([-1, 1]),
+        #    self.resources_vision.flatten().reshape([-1, 1]),
+        #    self.gathering_vision.flatten().reshape([-1, 1])], 1).reshape([3, 9])
