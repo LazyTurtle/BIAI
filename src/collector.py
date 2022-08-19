@@ -59,7 +59,7 @@ class Collector(Agent):
         if self.debug:
             logging.info(f"output activations: {output}")
 
-        activations = np.exp(output)  # in case we have negative outputs, it shouldn't happen though
+        activations = output
         prob_mass = sum(activations)
         action = None
         if prob_mass == 0.:
